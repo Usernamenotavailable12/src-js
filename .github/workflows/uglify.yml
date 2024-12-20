@@ -1,0 +1,42 @@
+name: Uglify JavaScript
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  uglify:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Uglify JavaScript files
+      - name: Uglify JS
+        run: |
+          mkdir -p dist
+          npx terser src/*.js -o dist/app.min.js
+
+      # Step 5: Push the uglified code to a branch
+      - name: Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist
+          git commit -m "Automated uglification"
+          git push origin main:uglified-branch
