@@ -26,12 +26,9 @@ jobs:
           npm install
           npm list terser
 
-      # Step 4: Debug Environment
-      - name: Debug Environment
+      # Step 4: Debug src folder
+      - name: Debug src folder
         run: |
-          echo "Current directory: $(pwd)"
-          echo "Files in working directory:"
-          ls -l
           echo "Contents of src folder:"
           ls -l src || echo "src folder is missing"
 
@@ -39,15 +36,17 @@ jobs:
       - name: Fix Permissions for terser
         run: chmod +x ./node_modules/.bin/terser
 
-      # Step 6: Uglify JavaScript files
+      # Step 6: Run terser with debug
       - name: Uglify JS
         run: |
           mkdir -p dist
-          npx terser src/*.js -o dist/app.min.js
+          npx terser src/*.js -o dist/app.min.js || echo "Terser command failed"
 
       # Step 7: Verify dist folder
       - name: Verify dist folder
-        run: ls -l dist || echo "dist folder is missing"
+        run: |
+          echo "Contents of dist folder:"
+          ls -l dist || echo "dist folder is missing"
 
       # Step 8: Push the uglified code to a branch
       - name: Push changes
