@@ -7,7 +7,7 @@ on:
 
 jobs:
   uglify:
-    runs-on: ubuntu-22.04 # Explicitly set Ubuntu version
+    runs-on: ubuntu-latest
 
     steps:
       # Step 1: Checkout the repository
@@ -24,19 +24,23 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm list terser # Verify terser is installed
+          npm list terser
 
-      # Step 4: Debug environment (optional)
-      - name: Debug Path
-        run: echo $PATH
+      # Step 4: Debug node_modules/.bin (optional)
+      - name: Debug node_modules/.bin
+        run: ls -l ./node_modules/.bin
 
-      # Step 5: Uglify JavaScript files
+      # Step 5: Fix Permissions for terser
+      - name: Fix Permissions for terser
+        run: chmod +x ./node_modules/.bin/terser
+
+      # Step 6: Uglify JavaScript files
       - name: Uglify JS
         run: |
           mkdir -p dist
           npx terser src/*.js -o dist/app.min.js
 
-      # Step 6: Push the uglified code to a branch
+      # Step 7: Push the uglified code to a branch
       - name: Push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
