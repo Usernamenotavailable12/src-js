@@ -1,4 +1,4 @@
-name: Uglify JavaScript
+name: Minify Each JavaScript File Separately
 
 on:
   push:
@@ -36,11 +36,13 @@ jobs:
       - name: Fix Permissions for terser
         run: chmod +x ./node_modules/.bin/terser
 
-      # Step 6: Run terser with debug
-      - name: Uglify JS
+      # Step 6: Minify Each JS File
+      - name: Minify Each JS File
         run: |
           mkdir -p dist
-          npx terser src/*.js -o dist/app.min.js || echo "Terser command failed"
+          for file in src/*.js; do
+            npx terser "$file" -o "dist/$(basename "$file" .js).min.js" --compress --mangle
+          done
 
       # Step 7: Verify dist folder
       - name: Verify dist folder
@@ -48,7 +50,7 @@ jobs:
           echo "Contents of dist folder:"
           ls -l dist || echo "dist folder is missing"
 
-      # Step 8: Push the uglified code to a branch
+      # Step 8: Push the minified files to a branch
       - name: Push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,5 +60,5 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git checkout -B uglified-branch
           git add dist
-          git commit -m "Automated uglification"
+          git commit -m "Automated minification of each JS file"
           git push -u origin uglified-branch --force
