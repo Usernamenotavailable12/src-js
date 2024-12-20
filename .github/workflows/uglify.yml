@@ -52,6 +52,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git checkout -B uglified-branch # Create or switch to the branch
           git add dist
           git commit -m "Automated uglification"
-          git push origin uglified-branch
+          git push -u origin uglified-branch
