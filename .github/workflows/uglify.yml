@@ -60,4 +60,4 @@ jobs:
           git checkout -B uglified-branch
           git add dist
           git commit -m "Automated uglification"
-          git push -u origin uglified-branch
+          git push -u origin uglified-branch --force
