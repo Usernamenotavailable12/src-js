@@ -26,13 +26,14 @@ jobs:
           npm install
           npm list terser
 
-      # Step 4: Debug environment (optional)
+      # Step 4: Debug Environment
       - name: Debug Environment
         run: |
-          echo "Node.js version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "Path: $PATH"
-          ls -l ./node_modules/.bin
+          echo "Current directory: $(pwd)"
+          echo "Files in working directory:"
+          ls -l
+          echo "Contents of src folder:"
+          ls -l src || echo "src folder is missing"
 
       # Step 5: Fix Permissions for terser
       - name: Fix Permissions for terser
@@ -44,7 +45,11 @@ jobs:
           mkdir -p dist
           npx terser src/*.js -o dist/app.min.js
 
-      # Step 7: Push the uglified code to a branch
+      # Step 7: Verify dist folder
+      - name: Verify dist folder
+        run: ls -l dist || echo "dist folder is missing"
+
+      # Step 8: Push the uglified code to a branch
       - name: Push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,7 +57,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git checkout -B uglified-branch # Create or switch to the branch
+          git checkout -B uglified-branch
           git add dist
           git commit -m "Automated uglification"
-          git push -u origin uglified-branch 
+          git push -u origin uglified-branch
