@@ -21,7 +21,15 @@
 
     const GET_SHOP_ITEMS_QUERY = `
         query ShopItemConnection {
-          shopItemConnection(shopItemCategoryId: "ycGrHNho6Y4cSh60pN3O") {
+          shopItemConnection(
+            shopItemCategoryId: "ycGrHNho6Y4cSh60pN3O",
+            orderBy: [
+              {
+                field: order,
+                direction: ASCENDING
+              }
+            ]
+          ) {
             edges {
               node {
                 price {
