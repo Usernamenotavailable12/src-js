@@ -66,7 +66,8 @@ async function fetchActiveUserBoxes() {
     const data = await fetchGraphQL(query, { userId: authData.userId, brandId: BRAND_ID });
     return data.data.userBoxConnection.edges
         .map(edge => edge.node)
-        .filter(box => box.status === "ACTIVE");
+        .filter((box) => box.status === "ACTIVE")
+        .filter((box) => ["LOOT_BOX", "MYSTERY_BOX"].includes(box.box.type));
 }
 
 async function openBox(userBoxId) {
