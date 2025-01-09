@@ -1,25 +1,5 @@
 (function () {
-
-
-    async function fetchGraphQL(query, variables = {}) {
-      const authData = extractAuthDataFromCookie();
-      if (!authData || !authData.accessToken) {
-        throw new Error("Unable to retrieve authorization data.");
-      }
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authData.accessToken}`,
-        },
-        body: JSON.stringify({ query, variables }),
-      });
-      const result = await response.json();
-      return result;
-    }
-
-
-    const GET_SHOP_ITEMS_QUERY = `
+  const GET_SHOP_ITEMS_QUERY = `
         query ShopItemConnection {
           shopItemConnection(
             shopItemCategoryId: "ycGrHNho6Y4cSh60pN3O",
@@ -44,7 +24,7 @@
         }
       `;
 
-    const PURCHASE_ITEM_MUTATION = `
+  const PURCHASE_ITEM_MUTATION = `
         mutation PurchaseShopItems($input: PurchaseShopItemsInput!) {
           purchaseShopItems(input: $input) {
             shopTransaction {
@@ -57,111 +37,108 @@
         }
       `;
 
+  function createShopItem(item) {
+    const itemDiv = document.createElement("div");
 
-    function createShopItem(item) {
-      const itemDiv = document.createElement('div');
+    itemDiv.className = `shop-item ${item.contentId || "default-contentId"}`;
+    itemDiv.setAttribute("data-id", item.id);
 
-      itemDiv.className = `shop-item ${item.contentId || 'default-contentId'}`;
-      itemDiv.setAttribute('data-id', item.id); 
+    const description = document.createElement("h3");
+    description.className = "description";
+    description.textContent = item.description || "No description available.";
+    itemDiv.appendChild(description);
 
-      const description = document.createElement('h3');
-      description.className = 'description';
-      description.textContent = item.description || 'No description available.';
-      itemDiv.appendChild(description);
+    const buyButton = document.createElement("button");
+    buyButton.textContent = `${item.price.value} ❤️`;
+    buyButton.setAttribute("onclick", `window.handleBuy('${item.id}')`);
+    itemDiv.appendChild(buyButton);
 
-      const buyButton = document.createElement('button');
-      buyButton.textContent = `${item.price.value} ❤️`;
-      buyButton.setAttribute('onclick', `window.handleBuy('${item.id}')`);
-      itemDiv.appendChild(buyButton);
+    return itemDiv;
+  }
 
-      return itemDiv;
+  async function loadShopItems() {
+    const shopContainer = document.getElementById("shop-container");
+    const loadButton = document.querySelector(".load-shop-button");
+    loadButton.disabled = true;
+    loadButton.textContent = "";
+
+    try {
+      const data = await fetchGraphQL(GET_SHOP_ITEMS_QUERY);
+      if (data.errors) {
+        throw new Error(data.errors.map((err) => err.message).join(", "));
+      }
+      const items = data.data.shopItemConnection.edges.map((edge) => edge.node);
+      shopContainer.innerHTML = "";
+      if (items.length === 0) {
+        shopContainer.innerHTML = "<p>No items available in this category.</p>";
+      } else {
+        items.forEach((item) => {
+          const itemElement = createShopItem(item);
+          shopContainer.appendChild(itemElement);
+        });
+      }
+      shopContainer.style.display = "flex";
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loadButton.disabled = false;
+      loadButton.textContent = "";
+    }
+  }
+
+  async function handleBuy(itemId) {
+    const itemElement = document.querySelector(
+      `.shop-item[data-id="${itemId}"]`
+    );
+    const buyButton = itemElement.querySelector("button");
+    const feedbackElement = document.createElement("div");
+    feedbackElement.className = "item-feedback";
+
+    const existingFeedback = buyButton.previousElementSibling;
+    if (
+      existingFeedback &&
+      existingFeedback.classList.contains("item-feedback")
+    ) {
+      existingFeedback.remove();
     }
 
-
-
-    async function loadShopItems() {
-      const shopContainer = document.getElementById('shop-container');
-      const loadButton = document.querySelector('.load-shop-button');
-      loadButton.disabled = true; 
-      loadButton.textContent = '';
-
-      try {
-        const data = await fetchGraphQL(GET_SHOP_ITEMS_QUERY);
-        if (data.errors) {
-          throw new Error(data.errors.map(err => err.message).join(', '));
-        }
-        const items = data.data.shopItemConnection.edges.map(edge => edge.node);
-        shopContainer.innerHTML = ''; 
-        if (items.length === 0) {
-          shopContainer.innerHTML = '<p>No items available in this category.</p>';
-        } else {
-          items.forEach(item => {
-            const itemElement = createShopItem(item);
-            shopContainer.appendChild(itemElement);
-          });
-        }
-        shopContainer.style.display = 'flex';
-      } catch (error) {
-        console.error(error);
-      } finally {
-        loadButton.disabled = false; 
-        loadButton.textContent = '';
-      }
-    }
-
-    async function handleBuy(itemId) {
-      const itemElement = document.querySelector(`.shop-item[data-id="${itemId}"]`);
-      const buyButton = itemElement.querySelector('button'); 
-      const feedbackElement = document.createElement('div');
-      feedbackElement.className = 'item-feedback';
-
-
-      const existingFeedback = buyButton.previousElementSibling;
-      if (existingFeedback && existingFeedback.classList.contains('item-feedback')) {
-        existingFeedback.remove();
-      }
-
-      try {
-        const variables = {
-          input: {
-            shopItemIds: [itemId],
-          },
-        };
-        const data = await fetchGraphQL(PURCHASE_ITEM_MUTATION, variables);
-        if (data.errors) {
-          const errorMsg = data.errors[0].message;
-          if (errorMsg === "NOT_ENOUGH_MONEY") {
-            feedbackElement.textContent = "";
-            feedbackElement.style.color = "red";
-            feedbackElement.classList.add("not-enough-money");
-          } else {
-            feedbackElement.textContent = `${errorMsg}`;
-            feedbackElement.style.color = "red";
-          }
-        } else {
+    try {
+      const variables = {
+        input: {
+          shopItemIds: [itemId],
+        },
+      };
+      const data = await fetchGraphQL(PURCHASE_ITEM_MUTATION, variables);
+      if (data.errors) {
+        const errorMsg = data.errors[0].message;
+        if (errorMsg === "NOT_ENOUGH_MONEY") {
           feedbackElement.textContent = "";
-          feedbackElement.style.color = "green";
-          feedbackElement.classList.add("purchase-successful");
+          feedbackElement.style.color = "red";
+          feedbackElement.classList.add("not-enough-money");
+        } else {
+          feedbackElement.textContent = `${errorMsg}`;
+          feedbackElement.style.color = "red";
         }
-      } catch (error) {
-        feedbackElement.textContent = `${error.message}`;
-        feedbackElement.style.color = "red";
-        console.error(error);
+      } else {
+        feedbackElement.textContent = "";
+        feedbackElement.style.color = "green";
+        feedbackElement.classList.add("purchase-successful");
       }
-
-
-      itemElement.insertBefore(feedbackElement, buyButton);
-
-
-      setTimeout(() => {
-        if (feedbackElement.parentNode) {
-          feedbackElement.remove();
-        }
-      }, 3000);
+    } catch (error) {
+      feedbackElement.textContent = `${error.message}`;
+      feedbackElement.style.color = "red";
+      console.error(error);
     }
 
+    itemElement.insertBefore(feedbackElement, buyButton);
 
- 
-    window.loadShopItems = loadShopItems;
-    window.handleBuy = handleBuy;
-  })();
+    setTimeout(() => {
+      if (feedbackElement.parentNode) {
+        feedbackElement.remove();
+      }
+    }, 3000);
+  }
+
+  window.loadShopItems = loadShopItems;
+  window.handleBuy = handleBuy;
+})();
