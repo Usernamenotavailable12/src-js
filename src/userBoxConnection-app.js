@@ -8,7 +8,7 @@ async function fetchActiveUserBoxes() {
 
   const query = `
     query UserBoxConnection($userId: ID, $brandId: ID!) {
-      userBoxConnection(userId: $userId, brandId: $brandId, last: 23) {
+      userBoxConnection(userId: $userId, brandId: $brandId, status: ACTIVE) {
         edges {
           node {
             userBoxId
