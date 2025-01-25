@@ -1,51 +1,40 @@
 async function fetchNewGameIds() {
-    const fetchNewGameIdsUrl = "https://www.ambassadoribet.com/_internal/gql";
-    
-    const requestBadgeBody = {
-        operationName: "LobbyGames",
-        variables: {
-            brandId: "ab",
-            countryCode: "GE",
-            device: "DESKTOP",
-            gameFilters: {
-                orderBy: [
-                    {
-                        field: "releasedAt",
-                        direction: "DESCENDING"
-                    }
-                ],
-                source: ["LATEST_RELEASES"],
-                type: ["SLOT"]
-            },
-            jurisdiction: "GE",
-            limit: 20
-        },
-        query: `query LobbyGames($brandId: ID!, $countryCode: CountryCode!, $device: Device!, $gameFilters: LobbyGameFiltersInput!, $jurisdiction: Jurisdiction!, $limit: Int!) {
-            lobbyGames(brandId: $brandId, countryCode: $countryCode, device: $device, gameFilters: $gameFilters, jurisdiction: $jurisdiction, limit: $limit) {
+    const query = `
+        query LobbyGames {
+            lobbyGames(
+                brandId: "ab",
+                gameFilters: {
+                    orderBy: [
+                        {
+                            direction: DESCENDING,
+                            field: releasedAt
+                        }
+                    ]
+                },
+                limit: 20
+            ) {
                 gameId
             }
-        }`
-    };
+        }
+    `;
 
     try {
-        const response = await fetch(fetchNewGameIdsUrl, {
+        const response = await fetch(API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(requestBadgeBody)
+            body: JSON.stringify({ query })
         });
-        
+
         const data = await response.json();
-        
-        if (!data || !data.data || !data.data.lobbyGames) {
+
+        if (!data?.data?.lobbyGames) {
             console.error("Invalid response structure:", data);
             return;
         }
 
         const gameIds = data.data.lobbyGames.map(game => game.gameId);
-
-        // Generate CSS dynamically
         generateCSS(gameIds);
     } catch (error) {
         console.error("Error fetching game IDs:", error);
