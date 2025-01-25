@@ -1,35 +1,63 @@
-  async function fetchNewGameIds() {
-    const fetchNewGameIdsUrl = "https://www.ambassadoribet.com/_internal/gql?operationName=LobbyGames&variables=%7B%22brandId%22:%22ab%22,%22countryCode%22:%22GE%22,%22device%22:%22DESKTOP%22,%22gameFilters%22:%7B%22orderBy%22:%5B%7B%22field%22:%22releasedAt%22,%22direction%22:%22DESCENDING%22%7D%5D,%22source%22:%5B%22LATEST_RELEASES%22%5D,%22type%22:%5B%22SLOT%22%5D%7D,%22jurisdiction%22:%22GE%22,%22limit%22:20%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%227edfbe74a98f32ce675eed18f27c8c42ecce4071fa59421382e744b500fda0b3%22%7D%7D";
+async function fetchNewGameIds() {
+    const fetchNewGameIdsUrl = "https://www.ambassadoribet.com/_internal/gql";
+    
+    const requestBadgeBody = {
+        operationName: "LobbyGames",
+        variables: {
+            brandId: "ab",
+            countryCode: "GE",
+            device: "DESKTOP",
+            gameFilters: {
+                orderBy: [
+                    {
+                        field: "releasedAt",
+                        direction: "DESCENDING"
+                    }
+                ],
+                source: ["LATEST_RELEASES"],
+                type: ["SLOT"]
+            },
+            jurisdiction: "GE",
+            limit: 20
+        },
+        query: `query LobbyGames($brandId: ID!, $countryCode: CountryCode!, $device: Device!, $gameFilters: LobbyGameFiltersInput!, $jurisdiction: Jurisdiction!, $limit: Int!) {
+            lobbyGames(brandId: $brandId, countryCode: $countryCode, device: $device, gameFilters: $gameFilters, jurisdiction: $jurisdiction, limit: $limit) {
+                gameId
+            }
+        }`
+    };
 
     try {
-      const response = await fetch(fetchNewGameIdsUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
+        const response = await fetch(fetchNewGameIdsUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestBadgeBody)
+        });
+        
+        const data = await response.json();
+        
+        if (!data || !data.data || !data.data.lobbyGames) {
+            console.error("Invalid response structure:", data);
+            return;
         }
-      });
-      const data = await response.json();
 
-      if (!data || !data.data || !data.data.lobbyGames) {
-        console.error("Invalid response structure:", data);
-        return;
-      }
+        const gameIds = data.data.lobbyGames.map(game => game.gameId);
 
-      const gameIds = data.data.lobbyGames.map(game => game.gameId);
-
-      // Generate CSS dynamically
-      generateCSS(gameIds);
+        // Generate CSS dynamically
+        generateCSS(gameIds);
     } catch (error) {
-      console.error("Error fetching game IDs:", error);
+        console.error("Error fetching game IDs:", error);
     }
-  }
+}
 
-  function generateCSS(gameIds) {
+function generateCSS(gameIds) {
     if (!gameIds.length) return;
 
     let cssContent = `x-casino-game-thumb {\n`;
     gameIds.forEach(id => {
-      cssContent += `  &[data-id="${id}"],\n`;
+        cssContent += `  &[data-id="${id}"],\n`;
     });
 
     // Remove last comma and close the CSS rule
@@ -58,9 +86,8 @@
     const styleElement = document.createElement("style");
     styleElement.textContent = cssContent;
     document.head.appendChild(styleElement);
-  }
+}
 
-
-  setTimeout(() => {
+setTimeout(() => {
     fetchNewGameIds();
-  }, 3000);
+}, 3000);
