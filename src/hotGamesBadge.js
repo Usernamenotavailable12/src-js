@@ -63,27 +63,30 @@ function generateRecentWinsCSS(wins) {
     position: absolute;
     color: #ffffff;
     font-size: 140%;
-    text-shadow: rgb(0,0,0) 2px 2px;
-    box-shadow: inset 0px 0px 10px black, inset 0px 0px 10px rgba(0,0,0,0.1);
-    background-image: radial-gradient(#2700af,#11004f) !important;
-    bottom: 0;
+    text-shadow: rgb(0,0,0,.2) 0px 2px 6px, rgb(0,0,0,.2) 0px -2px 6px,rgb(0,0,0,.2) 2px 0px 6px, rgb(0,0,0,.2) -2px 0px 6px;
+    box-shadow: inset 0px 0px 5px rgba(0,0,0,0.8), inset 0px 0px 10px rgba(0,0,0,0.2);
+    background-image: radial-gradient(#fa2a97, #a9065e) !important;
+    background-size: cover;
+    background-position: center;
+    top: 0;
     left: 0;
-    border-top-right-radius: 5px;
-    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top-left-radius: 5px;
     padding: 7px;
     z-index: 100000;
-    border-width: 3px;
+    border-width: 2px;
     border-style: solid;
-    border-image: linear-gradient(45deg, #ffba2c, #ffea00, #ffba2c, #ffea00, rgb(255,186,45)) 1;
-    outline: solid 4px rgb(31 5 28);
-    border-bottom: none;
+    border-image: radial-gradient(rgb(204,172,0), gold,rgb(255,154,0,.6)) 1;
+    outline: solid 5px rgb(31 5 28);
+    border-top: none;
     border-left: none;
-    font-family: 'Lilita One' !important;
+    font-family: 'Noto Sans Ambassadori' !important;
     pointer-events: none !important;
 
     @media (max-width: 768px) {
         font-size: 100%;
         padding: 3px 7px;
+        outline: solid 4px rgb(31 5 28);
     }
   }
   `;
@@ -93,7 +96,7 @@ function generateRecentWinsCSS(wins) {
     .map(
       (win) => `
     x-casino-game-thumb[data-id="${win.gameId}"]::after {
-      content: 'Hot Win: ${win.amount} ₾';
+      content: 'BIG WIN: ${win.amount} ₾';
     }
   `
     )
