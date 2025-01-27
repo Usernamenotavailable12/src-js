@@ -93,7 +93,7 @@ function generateRecentWinsCSS(wins) {
     .map(
       (win) => `
     x-casino-game-thumb[data-id="${win.gameId}"]::after {
-      content: '${win.amount} ₾';
+      content: 'Hot Win: ${win.amount} ₾';
     }
   `
     )
@@ -108,4 +108,4 @@ function generateRecentWinsCSS(wins) {
 // Run the script after 3 seconds when the site loads
 setTimeout(() => {
   fetchHotGameIds();
-}, 5000);
+}, 3200);
