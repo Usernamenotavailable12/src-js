@@ -62,7 +62,7 @@ function generateRecentWinsCSS(wins) {
   ${selectorList} {
     position: absolute;
     color: #ffffff;
-    font-size: 140%;
+    font-size: 17px;
     text-shadow: rgb(0,0,0,.2) 0px 2px 6px, rgb(0,0,0,.2) 0px -2px 6px,rgb(0,0,0,.2) 2px 0px 6px, rgb(0,0,0,.2) -2px 0px 6px;
     box-shadow: inset 0px 0px 5px rgba(0,0,0,0.8), inset 0px 0px 10px rgba(0,0,0,0.2);
     background-image: radial-gradient(#fa2a97, #a9065e) !important;
@@ -83,8 +83,8 @@ function generateRecentWinsCSS(wins) {
     font-family: 'Noto Sans Ambassadori' !important;
     pointer-events: none !important;
 
-    @media (max-width: 768px) {
-        font-size: 100%;
+    @media (max-width: 900px) {
+        font-size: 10px;
         padding: 3px 7px;
         outline: solid 4px rgb(31 5 28);
     }
