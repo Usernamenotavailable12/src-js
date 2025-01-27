@@ -108,4 +108,4 @@ function generateRecentWinsCSS(wins) {
 // Run the script after 3 seconds when the site loads
 setTimeout(() => {
   fetchHotGameIds();
-}, 3000);
+}, 5000);
