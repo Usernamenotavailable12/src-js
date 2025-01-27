@@ -3,7 +3,7 @@ async function fetchHotGameIds() {
   query RecentWinConnection {
     recentWinConnection(
       brandId: "ab",
-      first: 10,
+      first: 20,
       orderBy: {
         direction: DESCENDING,
         field: convertedAmount
@@ -30,10 +30,18 @@ async function fetchHotGameIds() {
 
     const data = await response.json();
 
-    const wins = data.data.recentWinConnection.edges.map((edge) => ({
-      gameId: edge.node.gameId,
-      amount: edge.node.amount,
-    }));
+    const winsMap = new Map();
+
+    // Store only the first occurrence of each gameId
+    data.data.recentWinConnection.edges.forEach((edge) => {
+      const { gameId, amount } = edge.node;
+      if (!winsMap.has(gameId)) {
+        winsMap.set(gameId, amount);
+      }
+    });
+
+    // Convert the map to an array of objects
+    const wins = Array.from(winsMap, ([gameId, amount]) => ({ gameId, amount }));
 
     generateRecentWinsCSS(wins);
   } catch (error) {
@@ -76,7 +84,7 @@ function generateRecentWinsCSS(wins) {
         font-size: 100%;
         padding: 3px 7px;
     }
-}
+  }
   `;
 
   // Generate only the dynamic content updates per game
