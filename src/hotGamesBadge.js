@@ -41,7 +41,10 @@ async function fetchHotGameIds() {
     });
 
     // Convert the map to an array of objects
-    const wins = Array.from(winsMap, ([gameId, amount]) => ({ gameId, amount }));
+    const wins = Array.from(winsMap, ([gameId, amount]) => ({
+      gameId,
+      amount,
+    }));
 
     generateRecentWinsCSS(wins);
   } catch (error) {
@@ -63,8 +66,10 @@ function generateRecentWinsCSS(wins) {
     position: absolute;
     color: #ffffff;
     font-size: 17px;
-    text-shadow: rgb(0,0,0,.2) 0px 2px 6px, rgb(0,0,0,.2) 0px -2px 6px,rgb(0,0,0,.2) 2px 0px 6px, rgb(0,0,0,.2) -2px 0px 6px;
-    box-shadow: inset 0px 0px 5px rgba(0,0,0,0.8), inset 0px 0px 10px rgba(0,0,0,0.2);
+    text-shadow: rgb(0, 0, 0, 0.2) 0px 2px 6px, rgb(0, 0, 0, 0.2) 0px -2px 6px,
+      rgb(0, 0, 0, 0.2) 2px 0px 6px, rgb(0, 0, 0, 0.2) -2px 0px 6px;
+    box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.8),
+      inset 0px 0px 10px rgba(0, 0, 0, 0.2);
     background-image: radial-gradient(#fa2a97, #a9065e) !important;
     background-size: cover;
     background-position: center;
@@ -76,17 +81,18 @@ function generateRecentWinsCSS(wins) {
     z-index: 100000;
     border-width: 2px;
     border-style: solid;
-    border-image: radial-gradient(rgb(204,172,0), gold,rgb(255,154,0,.6)) 1;
+    border-image: radial-gradient(rgb(204, 172, 0), gold, rgb(255, 154, 0, 0.6)) 1;
     outline: solid 5px rgb(31 5 28);
     border-top: none;
     border-left: none;
-    font-family: 'Noto Sans Ambassadori' !important;
+    font-family: "Noto Sans Ambassadori" !important;
     pointer-events: none !important;
-
-    @media (max-width: 900px) {
-        font-size: 10px;
-        padding: 3px 7px;
-        outline: solid 4px rgb(31 5 28);
+  }
+  @media (max-width: 900px) {
+    ${selectorList} {
+      font-size: 10px;
+      padding: 3px 7px;
+      outline: solid 4px rgb(31 5 28);
     }
   }
   `;
