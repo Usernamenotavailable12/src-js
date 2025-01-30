@@ -75,6 +75,7 @@ function generateRecentWinsCSS(wins) {
     background-position: center;
     top: 0;
     left: 0;
+    right: auto !important;
     border-bottom-right-radius: 5px;
     border-top-left-radius: 5px;
     padding: 7px;
