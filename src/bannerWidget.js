@@ -5,7 +5,7 @@ window["bannerSlider"] = (function() {
   var bannersData = null;
   var currentSlideIndex = 0;
   var slideInterval;
-  var autoSlideTime = 5000; // Default interval
+  var autoSlideTime = 5000; // Default auto-slide interval in milliseconds
 
   // Fetch the banner configuration JSON (with no cache)
   function fetchBannerConfig() {
@@ -16,7 +16,7 @@ window["bannerSlider"] = (function() {
         if (data.autoSlideInterval) {
           autoSlideTime = data.autoSlideInterval;
         }
-        // Preserve the current slide index if possible
+        // Preserve current slide index if possible
         var previousIndex = currentSlideIndex;
         buildSlider(data.banners);
         currentSlideIndex = (previousIndex < slidesWrapper.children.length)
@@ -30,25 +30,27 @@ window["bannerSlider"] = (function() {
       });
   }
 
-  // Build the slider DOM from the banners array
+  // Build the slider DOM based on the banners array
   function buildSlider(banners) {
     if (!banners || banners.length === 0) {
       console.warn('No banners provided in the configuration.');
       return;
     }
-    // Clear out any existing slides (useful on config reload)
+    // Clear any existing slides (useful if config is refreshed)
     slidesWrapper.innerHTML = '';
 
     banners.forEach(function(banner) {
       var slide = document.createElement('div');
       slide.className = 'slide';
-      // If a link is provided, attach an inline click handler
+
+      // If a link is provided, attach an inline click handler.
+      // This calls a global function switchCurnetUrl(navUrl) on your site.
       if (banner.link) {
         slide.setAttribute("onclick", "switchCurnetUrl(\"" + banner.link + "\")");
       }
-      // Build a responsive picture element
-      var picture = document.createElement('picture');
 
+      // Build a responsive <picture> element
+      var picture = document.createElement('picture');
       if (banner.mobile_image) {
         var sourceMobile = document.createElement('source');
         sourceMobile.media = "(max-width: 767px)";
@@ -68,7 +70,7 @@ window["bannerSlider"] = (function() {
     });
   }
 
-  // Show the slide at a given index by updating the wrapper’s transform
+  // Show a slide at a given index by updating the transform on slidesWrapper
   function showSlide(index) {
     var slidesCount = slidesWrapper.children.length;
     if (slidesCount === 0) return;
@@ -83,7 +85,7 @@ window["bannerSlider"] = (function() {
     slidesWrapper.style.transform = 'translateX(-' + (currentSlideIndex * 100) + '%)';
   }
 
-  // Start or restart the auto-slide interval
+  // Start (or restart) the auto-slide interval
   function startAutoSlide() {
     clearInterval(slideInterval);
     slideInterval = setInterval(function() {
@@ -91,27 +93,30 @@ window["bannerSlider"] = (function() {
     }, autoSlideTime);
   }
 
-  // Pause auto-sliding (for example, when the mouse is over the slider)
+  // Pause auto-slide (e.g. when mouse enters the slider)
   function pauseAutoSlide() {
     clearInterval(slideInterval);
   }
 
-  // Initialize the slider: find container, set up event listeners, load config
+  // The init function waits until the slider container and inner wrapper exist.
   function init() {
     sliderContainer = document.getElementById('banner-slider');
     if (!sliderContainer) {
-      console.error('Slider container (#banner-slider) not found.');
+      // Container not found yet; try again in 100ms.
+      setTimeout(init, 100);
       return;
     }
     slidesWrapper = sliderContainer.querySelector('.slides-wrapper');
     if (!slidesWrapper) {
-      console.error('Slides wrapper not found inside #banner-slider.');
+      // The wrapper isn’t present yet; try again in 100ms.
+      setTimeout(init, 100);
       return;
     }
-    // Attach event listeners for pausing/resuming auto-slide
+
+    // Set up event listeners for pause/resume and arrow navigation.
     sliderContainer.addEventListener('mouseenter', pauseAutoSlide);
     sliderContainer.addEventListener('mouseleave', startAutoSlide);
-    // Attach click events for navigation arrows if they exist
+
     var prevArrow = document.querySelector('.arrow.prev');
     var nextArrow = document.querySelector('.arrow.next');
     if (prevArrow) {
@@ -126,19 +131,20 @@ window["bannerSlider"] = (function() {
         showSlide(currentSlideIndex + 1);
       });
     }
-    // Initial load and periodic update every 10 seconds
+
+    // Load configuration and periodically update every 10 seconds.
     fetchBannerConfig();
     setInterval(fetchBannerConfig, 10000);
   }
 
-  // Optional cleanup method if you need to destroy the slider instance
+  // Optional cleanup method if needed
   function destroy() {
     clearInterval(slideInterval);
     if (sliderContainer) {
       sliderContainer.removeEventListener('mouseenter', pauseAutoSlide);
       sliderContainer.removeEventListener('mouseleave', startAutoSlide);
     }
-    // Additional cleanup as required...
+    // Add any additional cleanup here...
   }
 
   // Public API
@@ -149,11 +155,5 @@ window["bannerSlider"] = (function() {
   };
 })();
 
-// Auto-initialize the slider when the DOM is ready (like CommonNinja does)
-if (document.readyState === "complete" || document.readyState === "interactive") {
-  window.bannerSlider.init();
-} else {
-  document.addEventListener("DOMContentLoaded", function() {
-    window.bannerSlider.init();
-  });
-}
+// Immediately call init(). This will poll until the container is available.
+window.bannerSlider.init();
