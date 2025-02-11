@@ -1,13 +1,14 @@
-window["bannerSlider"] = (function() {
+window.bannerSlider = (function() {
   // Internal variables
   var sliderContainer, slidesWrapper;
   var configUrl = 'https://usernamenotavailable12.github.io/manifest/banners.json';
   var bannersData = null;
   var currentSlideIndex = 0;
   var slideInterval;
-  var autoSlideTime = 5000; // Default auto-slide interval in milliseconds
+  var configIntervalId;
+  var autoSlideTime = 5000; // Default auto-slide interval (in ms)
 
-  // Fetch the banner configuration JSON (with no cache)
+  // Fetch the banner configuration JSON (with no-cache)
   function fetchBannerConfig() {
     fetch(configUrl + '?_=' + new Date().getTime(), { cache: "no-cache" })
       .then(function(response) { return response.json(); })
@@ -16,7 +17,7 @@ window["bannerSlider"] = (function() {
         if (data.autoSlideInterval) {
           autoSlideTime = data.autoSlideInterval;
         }
-        // Preserve current slide index if possible
+        // Preserve the current slide index if possible
         var previousIndex = currentSlideIndex;
         buildSlider(data.banners);
         currentSlideIndex = (previousIndex < slidesWrapper.children.length)
@@ -36,7 +37,7 @@ window["bannerSlider"] = (function() {
       console.warn('No banners provided in the configuration.');
       return;
     }
-    // Clear any existing slides (useful if config is refreshed)
+    // Clear any existing slides (useful on config refresh)
     slidesWrapper.innerHTML = '';
 
     banners.forEach(function(banner) {
@@ -51,6 +52,7 @@ window["bannerSlider"] = (function() {
 
       // Build a responsive <picture> element
       var picture = document.createElement('picture');
+
       if (banner.mobile_image) {
         var sourceMobile = document.createElement('source');
         sourceMobile.media = "(max-width: 767px)";
@@ -65,6 +67,7 @@ window["bannerSlider"] = (function() {
       } else {
         console.warn('No desktop image provided for banner:', banner);
       }
+
       slide.appendChild(picture);
       slidesWrapper.appendChild(slide);
     });
@@ -93,27 +96,34 @@ window["bannerSlider"] = (function() {
     }, autoSlideTime);
   }
 
-  // Pause auto-slide (e.g. when mouse enters the slider)
+  // Pause auto-slide (e.g., when the mouse enters the slider)
   function pauseAutoSlide() {
     clearInterval(slideInterval);
   }
 
-  // The init function waits until the slider container and inner wrapper exist.
+  // The init function waits until the slider container and inner wrapper exist,
+  // and it marks the container as initialized to prevent double initialization.
   function init() {
-    sliderContainer = document.getElementById('banner-slider');
-    if (!sliderContainer) {
-      // Container not found yet; try again in 100ms.
+    var container = document.getElementById('banner-slider');
+    if (!container) {
+      // Container not found yet; try again shortly.
       setTimeout(init, 100);
       return;
     }
+    // If the container is already initialized, do nothing.
+    if (container.getAttribute('data-banner-slider-initialized') === 'true') {
+      return;
+    }
+    container.setAttribute('data-banner-slider-initialized', 'true');
+
+    sliderContainer = container;
     slidesWrapper = sliderContainer.querySelector('.slides-wrapper');
     if (!slidesWrapper) {
-      // The wrapper isn’t present yet; try again in 100ms.
       setTimeout(init, 100);
       return;
     }
 
-    // Set up event listeners for pause/resume and arrow navigation.
+    // Attach event listeners for pause/resume and navigation arrows.
     sliderContainer.addEventListener('mouseenter', pauseAutoSlide);
     sliderContainer.addEventListener('mouseleave', startAutoSlide);
 
@@ -132,28 +142,51 @@ window["bannerSlider"] = (function() {
       });
     }
 
-    // Load configuration and periodically update every 10 seconds.
+    // Load configuration and set up periodic update every 10 seconds.
     fetchBannerConfig();
-    setInterval(fetchBannerConfig, 10000);
+    configIntervalId = setInterval(fetchBannerConfig, 10000);
   }
 
-  // Optional cleanup method if needed
+  // The destroy function cleans up event listeners, intervals, and removes the initialization flag.
   function destroy() {
-    clearInterval(slideInterval);
     if (sliderContainer) {
       sliderContainer.removeEventListener('mouseenter', pauseAutoSlide);
       sliderContainer.removeEventListener('mouseleave', startAutoSlide);
+      sliderContainer.removeAttribute('data-banner-slider-initialized');
     }
-    // Add any additional cleanup here...
+    clearInterval(slideInterval);
+    clearInterval(configIntervalId);
   }
 
   // Public API
   return {
     init: init,
-    showSlide: showSlide,
-    destroy: destroy
+    destroy: destroy,
+    showSlide: showSlide
   };
 })();
 
-// Immediately call init(). This will poll until the container is available.
+// ---
+// Mutation Observer to detect when the slider container is removed or added back.
+// This is useful in Angular apps where route changes might remove the component.
+var sliderObserver = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    // Check for removed nodes.
+    mutation.removedNodes.forEach(function(node) {
+      if (node.nodeType === 1 && node.id === 'banner-slider') {
+        window.bannerSlider.destroy();
+      }
+    });
+    // Check for added nodes.
+    mutation.addedNodes.forEach(function(node) {
+      if (node.nodeType === 1 && node.id === 'banner-slider') {
+        window.bannerSlider.init();
+      }
+    });
+  });
+});
+sliderObserver.observe(document.body, { childList: true, subtree: true });
+
+// ---
+// Initial call to initialize the slider.
 window.bannerSlider.init();
