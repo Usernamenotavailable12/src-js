@@ -55,7 +55,7 @@ window.bannerSlider = (function() {
 
       if (banner.mobile_image) {
         var sourceMobile = document.createElement('source');
-        sourceMobile.media = "(max-width: 767px)";
+        sourceMobile.media = "(max-width: 1280px)";
         sourceMobile.srcset = banner.mobile_image;
         picture.appendChild(sourceMobile);
       }
