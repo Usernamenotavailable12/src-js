@@ -55,7 +55,7 @@ window.bannerSlider = (function() {
 
       if (banner.mobile_image) {
         var sourceMobile = document.createElement('source');
-        sourceMobile.media = "(max-width: 1280px)";
+        sourceMobile.media = "(max-width: 767px)";
         sourceMobile.srcset = banner.mobile_image;
         picture.appendChild(sourceMobile);
       }
@@ -102,7 +102,7 @@ window.bannerSlider = (function() {
   }
 
   // The init function waits until the slider container and inner wrapper exist,
-  // and it marks the container as initialized to prevent double initialization.
+  // and marks the container as initialized (via a data attribute) to prevent double initialization.
   function init() {
     var container = document.getElementById('banner-slider');
     if (!container) {
@@ -168,16 +168,15 @@ window.bannerSlider = (function() {
 
 // ---
 // Mutation Observer to detect when the slider container is removed or added back.
-// This is useful in Angular apps where route changes might remove the component.
 var sliderObserver = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    // Check for removed nodes.
+    // If a node with id "banner-slider" is removed, call destroy.
     mutation.removedNodes.forEach(function(node) {
       if (node.nodeType === 1 && node.id === 'banner-slider') {
         window.bannerSlider.destroy();
       }
     });
-    // Check for added nodes.
+    // If a node with id "banner-slider" is added, call init.
     mutation.addedNodes.forEach(function(node) {
       if (node.nodeType === 1 && node.id === 'banner-slider') {
         window.bannerSlider.init();
@@ -188,5 +187,32 @@ var sliderObserver = new MutationObserver(function(mutations) {
 sliderObserver.observe(document.body, { childList: true, subtree: true });
 
 // ---
-// Initial call to initialize the slider.
-window.bannerSlider.init();
+// "pageshow" event listener for back/forward navigation.
+window.addEventListener("pageshow", function() {
+  var container = document.getElementById('banner-slider');
+  if (container) {
+    // If the container exists but isn't initialized or its content is empty, reinitialize.
+    var slides = container.querySelector('.slides-wrapper');
+    if (!container.getAttribute('data-banner-slider-initialized') ||
+        !slides ||
+        slides.innerHTML.trim() === "") {
+      window.bannerSlider.destroy();
+      window.bannerSlider.init();
+    }
+  }
+});
+
+// ---
+// Polling: Every 500ms check if the slider container exists but is not initialized.
+// This handles direct page loads or Angular route changes that might not trigger MutationObserver.
+setInterval(function() {
+  var container = document.getElementById('banner-slider');
+  if (container) {
+    var slides = container.querySelector('.slides-wrapper');
+    if (!container.getAttribute('data-banner-slider-initialized') ||
+        !slides ||
+        slides.innerHTML.trim() === "") {
+      window.bannerSlider.init();
+    }
+  }
+}, 500);
