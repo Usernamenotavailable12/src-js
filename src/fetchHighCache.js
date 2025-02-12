@@ -1,4 +1,4 @@
-async function fetchHighCache() {
+async function fetchHighCash() {
   const apiUrl = 'https://ambassadoribetge-api-prod-bgsp.egt-ong.com/api/jackpot/stats';
   try {
       const response = await fetch(apiUrl);
@@ -19,23 +19,43 @@ async function fetchHighCache() {
               if (level1Stats) {
                   const currentValueObj = level1Stats.currentValue.find(val => val.key === 'GEL');
                   if (currentValueObj) {
-                      const currentValue = `"${currentValueObj.value}"`; // Ensure value is in quotes
-                      console.log("CSS Variable Set:", currentValue);
+                    let currentValue = Math.round(currentValueObj.value / 100);
+                    currentValue = `"${new Intl.NumberFormat('en-US').format(currentValue)}₾"`; // Add commas
 
-                      // Apply CSS variable directly to specified elements
-                      const selectors = [
-                          'x-casino-game-thumb[data-id="princess-cash"]',
-                          'x-casino-game-thumb[data-id="leprechance-treasury"]',
-                          'x-casino-game-thumb[data-id="dragons-realm"]',
-                          'x-casino-game-thumb[data-id="mummy-secret"]'
-                      ];
+                      console.log("CSS Content Set:", currentValue);
 
-                      selectors.forEach(selector => {
-                          document.querySelectorAll(selector).forEach(element => {
-                              element.style.setProperty('--high-cash-current-value', currentValue);
-                          });
-                      });
+                      // Inject dynamic CSS into the document
+                      const style = document.createElement("style");
+                      style.innerHTML = `
+                          x-casino-game-thumb[data-id="princess-cash"],
+                          x-casino-game-thumb[data-id="leprechance-treasury"],
+                          x-casino-game-thumb[data-id="dragons-realm"],
+                          x-casino-game-thumb[data-id="mummy-secret"] {
+                              &::before {
+                                  content: ${currentValue};
+                                      position: absolute;
+                                      bottom: 10px;
+                                      right: 10px;
+                                      font-size: var(--font-size-body);
+                                      background: var(--background-background) var(--highcash) no-repeat 5px
+                                        center;
+                                      padding: 5px 5px 5px 25px;
+                                      border-radius: 7px;
+                                      z-index: 2;
+                                      pointer-events: none;
+                              }
+                          }
+                      `;
 
+                      // Remove old styles if they exist
+                      const existingStyle = document.getElementById("high-cash-style");
+                      if (existingStyle) {
+                          existingStyle.remove();
+                      }
+
+                      // Add new styles
+                      style.id = "high-cash-style";
+                      document.head.appendChild(style);
                   } else {
                       console.warn("currentValue for GEL not found.");
                   }
@@ -52,7 +72,10 @@ async function fetchHighCache() {
       console.error('Error fetching jackpot stats:', error);
   }
 }
+
+// Call the function immediately and every 3.5 seconds
 setTimeout(() => {
-  fetchHighCache();
-}, 3500);
-// Call the function on page load
+  fetchHighCash();
+}, 3600);
+
+
