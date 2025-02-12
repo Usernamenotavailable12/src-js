@@ -6,7 +6,6 @@ async function fetchHighCash() {
           throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("API Response:", data); // Debugging
 
       // Check if instanceStats exists
       if (data.jackpotInstancesStats && data.jackpotInstancesStats.instanceStats) {
@@ -21,8 +20,6 @@ async function fetchHighCash() {
                   if (currentValueObj) {
                     let currentValue = Math.round(currentValueObj.value / 100);
                     currentValue = `"${new Intl.NumberFormat('en-US').format(currentValue)}₾"`; // Add commas
-
-                      console.log("CSS Content Set:", currentValue);
 
                       // Inject dynamic CSS into the document
                       const style = document.createElement("style");
@@ -77,5 +74,3 @@ async function fetchHighCash() {
 setTimeout(() => {
   fetchHighCash();
 }, 3600);
-
-
