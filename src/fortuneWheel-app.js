@@ -316,6 +316,7 @@ async function startWheelSpin() {
     console.error(error);
     spinButton.disabled = false;
   }
+  addTemporarySpinningClass();
 }
 
 // Helper function to play a sound by element ID
@@ -324,5 +325,17 @@ function playSound(soundId) {
   if (sound) {
     sound.currentTime = 0;
     sound.play().catch(err => console.warn("Sound playback error:", err));
+  }
+}
+
+function addTemporarySpinningClass() {
+  const wheelElement = document.getElementById("wheel");
+  if (wheelElement) {
+    setTimeout(() => {
+      wheelElement.classList.add("spining");
+      setTimeout(() => {
+        wheelElement.classList.remove("spining");
+      }, 3000); 
+    }, 500); 
   }
 }
