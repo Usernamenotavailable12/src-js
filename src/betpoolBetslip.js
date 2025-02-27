@@ -1,4 +1,3 @@
-  // Function to close modal and clear content
   function closeBetpoolBetslipModal() {
     document.getElementById("bp-popup-content").innerHTML = "";
     document.querySelector("[data-modal-betpool]").close();
