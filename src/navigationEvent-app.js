@@ -1,17 +1,20 @@
 function logCurrentPath(path) {
-    const trycounter = 0;
     setTimeout(() => {
-        try {
-            if (path.includes('leaderboard')) {
-                const leaderboard = new FullLeaderboardTable();
+        const waitForElement = () => {
+            if (document.getElementById('tournamentData')) {
+                try {
+                    if (path.includes('leaderboard')) {
+                        const leaderboard = new FullLeaderboardTable();
+                    }
+                } catch (e) {
+                    console.error("Ошибка в logCurrentPath:", e);
+                    setTimeout(() => logCurrentPath(path), 1000); // Retry after 1 second
+                }
+            } else {
+                setTimeout(waitForElement, 100); // Check again after 100ms
             }
-        } catch (e) {
-            console.error("error в logCurrentPath:", e);
-            trycounter++;
-            if (trycounter < 10) {
-                setTimeout(() => logCurrentPath(path), 1000);
-            }
-        }
+        };
+        waitForElement();
     }, 400);
 }
 (function (history) {
