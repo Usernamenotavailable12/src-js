@@ -1,3 +1,4 @@
+
 class FullLeaderboardTable {
     leaderboardsDivs = [];
     fullLEaderboardTableHead = document.createElement('div');
@@ -7,15 +8,15 @@ class FullLeaderboardTable {
 
     constructor() {
         this.FullDrawTournaments();
-        this.parent.appendChild(this.fullLEaderboardTableHead);
+        this.parent?.appendChild(this.fullLEaderboardTableHead);
         this.fullLEaderboardTableHead.classList.add('leaderboard-table-header');
-        this.parent.appendChild(this.fullLEaderboardTableBody);
+        this.parent?.appendChild(this.fullLEaderboardTableBody);
         this.fullLEaderboardTableBody.classList.add('leaderboard-table-body');
         this.locale = document.documentElement.getAttribute('lang') || 'en';
     }
 
     async FullDrawTournaments() {
-        const tournamentData = document.getElementById('tournamentData').textContent;
+        const tournamentData = document.getElementById('tournamentData')?.textContent;
         const tournamentItems = [];
         const segments = tournamentData.split(',');
 
@@ -145,7 +146,7 @@ class FullLeaderboardTable {
 
 
             if (nowDate > startsAtTimestamp && nowDate < endsAtTimestamp) {
-                document.getElementById(`leaderboard-table-element-${div.id}`).style.display = 'block';
+                document.getElementById(`leaderboard-table-element-${div.id}`)?.style.display = 'block';
                 button.className = "leaderboard-table-header-button-active";
             }
         });
