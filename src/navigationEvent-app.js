@@ -3,6 +3,7 @@ function logCurrentPath(path) {
         let attempts = 0;
         const maxAttempts = 10;
         const waitForElement = () => {
+            console.log("logCurrentPath: Waiting for tournamentData...");
             if (document.getElementById('tournamentData')) {
                 try {
                     if (path.includes('leaderboard')) {
