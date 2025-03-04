@@ -1,4 +1,3 @@
-
 class FullLeaderboardTable {
     leaderboardsDivs = [];
     fullLEaderboardTableHead = document.createElement('div');
