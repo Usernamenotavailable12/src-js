@@ -1,28 +1,38 @@
 function logCurrentPath(path) {
-switch (true) {
-        case path.includes('leaderboard'):
-            const leaderboard = new FullLeaderboardTable;
-            break;
-    }
+    const trycounter = 0;
+    setTimeout(() => {
+        try {
+            if (path.includes('leaderboard')) {
+                const leaderboard = new FullLeaderboardTable();
+            }
+        } catch (e) {
+            console.error("error в logCurrentPath:", e);
+            trycounter++;
+            if (trycounter < 10) {
+                setTimeout(() => logCurrentPath(path), 1000);
+            }
+        }
+    }, 400);
 }
-
-window.onpopstate = () => logCurrentPath(window.location.pathname);
-
-(function(history) {
+(function (history) {
     const pushState = history.pushState;
     const replaceState = history.replaceState;
-
-    history.pushState = function(...args) {
+    function waitForPageLoad(callback) {
+        if (document.readyState === "complete") {
+            callback();
+        } else {
+            window.addEventListener("load", callback, { once: true });
+        }
+    }
+    history.pushState = function (...args) {
         const result = pushState.apply(this, args);
-        logCurrentPath(window.location.pathname);
+        waitForPageLoad(() => logCurrentPath(window.location.pathname));
         return result;
     };
-
-    history.replaceState = function(...args) {
+    history.replaceState = function (...args) {
         const result = replaceState.apply(this, args);
-        logCurrentPath(window.location.pathname);
+        waitForPageLoad(() => logCurrentPath(window.location.pathname));
         return result;
     };
+    waitForPageLoad(() => logCurrentPath(window.location.pathname));
 })(window.history);
-
-logCurrentPath(window.location.pathname);
