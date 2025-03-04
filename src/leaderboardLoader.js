@@ -377,7 +377,7 @@ class FullLeaderboardTable {
             row.appendChild(positionElement);
 
             const userNameElement = document.createElement('div');
-            userNameElement.textContent = maskUsername(data.userName, data.userId);
+            userNameElement.textContent = maskUsername(data.userName, this.currentUserId, data.userId);
             userNameElement.classList.add('table-user-name');
             userNameElement.id = `table-user-name-${index}`;
             row.appendChild(userNameElement);
