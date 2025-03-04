@@ -145,7 +145,7 @@ class FullLeaderboardTable {
 
 
             if (nowDate > startsAtTimestamp && nowDate < endsAtTimestamp) {
-                document.getElementById(`leaderboard-table-element-${div.id}`)?.style.display = 'block';
+                document.getElementById(`leaderboard-table-element-${div.id}`).style.display = 'block';
                 button.className = "leaderboard-table-header-button-active";
             }
         });
