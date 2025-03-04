@@ -1,7 +1,7 @@
 function logCurrentPath(path) {
-    switch (true) {
+switch (true) {
         case path.includes('leaderboard'):
-            console.log('hellow world!');
+            const leaderboard = new FullLeaderboardTable;
             break;
     }
 }
