@@ -172,7 +172,7 @@ class FullLeaderboardTable {
             this.leaderboardTableParentElement.classList.add('leaderboard-table-element');
             this.leaderboardTableParentElement.style.display = 'none';
             this.leaderboardTableParentElement.id = `leaderboard-table-element-${leaderboardId}`;
-            this.currentUserId = extractAuthDataFromCookie().userId,
+            this.currentUserId = extractAuthDataFromCookie()?.userId,
                 this.actionsCount = actionsCount;
             this.locale = document.documentElement.getAttribute('lang') || 'en';
         }
