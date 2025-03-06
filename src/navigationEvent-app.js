@@ -8,13 +8,13 @@ function logCurrentPath(path) {
           try {
               const leaderboard = new FullLeaderboardTable();
           } catch (e) {
-            console.error("Ошибка в logCurrentPath:", e);
-            setTimeout(() => logCurrentPath(path), 1000); // Retry after 1 second
+            console.error("logCurrentPath:", e);
+            setTimeout(() => logCurrentPath(path), 1000); 
           }
         } else {
           attempts++;
           if (attempts < maxAttempts) {
-            setTimeout(waitForElement, 300); // Check again after 100ms
+            setTimeout(waitForElement, 300); 
           } else {
             console.error(
               "logCurrentPath: Maximum attempts reached waiting for tournamentData."
@@ -23,6 +23,15 @@ function logCurrentPath(path) {
         }
       };
       waitForElement();
+    }
+    else if (path.includes("wheel")) {
+      setTimeout(() => {
+        fetchWheelData()
+          .then((data) => {
+            if (data?.length > 0) {
+              selectFortuneWheel(data[0],1)
+            }});
+      }, 3000);      
     }
   }, 400);
 }
