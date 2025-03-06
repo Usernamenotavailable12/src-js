@@ -31,7 +31,7 @@ function logCurrentPath(path) {
             if (data?.length > 0) {
               selectFortuneWheel(data[0],1)
             }});
-      }, 3000);      
+      }, 1000);      
     }
   }, 400);
 }
