@@ -1,5 +1,4 @@
-var leaderboartTable;
-
+var leaderboardTable;
 
 function leaderboardInitialize() {
   let attempts = 0;
@@ -7,10 +6,10 @@ function leaderboardInitialize() {
   const waitForElement = () => {
     if (document.getElementById("tournamentData")) {
       try {
-        leaderboartTable = new FullLeaderboardTable();
+        leaderboardTable = new FullLeaderboardTable();
       } catch (e) {
         console.error("logCurrentPath:", e);
-        setTimeout(() => logCurrentPath(path), 1000);
+        setTimeout(() => logCurrentPath(window.location.pathname), 1000);
       }
     } else {
       attempts++;
@@ -23,47 +22,42 @@ function leaderboardInitialize() {
       }
     }
   };
+
+  // Invoke the function to start waiting for the element
+  waitForElement();
 }
 
 function wheelInitialize() {
   setTimeout(() => {
-    fetchWheelData()
-      .then((data) => {
-        if (data?.length > 0) {
-          selectFortuneWheel(data[0], 1)
-        }
-      });
-  }, 500);
+    fetchWheelData().then((data) => {
+      if (data?.length > 0) {
+        selectFortuneWheel(data[0], 1);
+      }
+    });
+  }, 1000);
 }
- 
+
 async function logCurrentPath(path, previousPath) {
-
   // DESTROY
-  if (previousPath && previousPath.includes("leaderboard") && path != previousPath) {
-    await leaderboartTable.destroy();
+  if (previousPath && previousPath.includes("leaderboard") && path !== previousPath) {
+    await leaderboardTable?.destroy();
   }
-
 
   // INIT
   setTimeout(() => {
-  
-  if (path.includes("leaderboard")) {
-    leaderboardInitialize();
-  }
-  else if (path.includes("wheel")) {
-    wheelInitialize();
-  }
-
+    if (path.includes("leaderboard")) {
+      leaderboardInitialize();
+    } else if (path.includes("wheel")) {
+      wheelInitialize();
+    }
   }, 400);
 }
-
-
 
 (function (history) {
   const pushState = history.pushState;
   const replaceState = history.replaceState;
   let previousPath = window.location.pathname;
-  
+
   function waitForPageLoad(callback) {
     if (document.readyState === "complete") {
       callback();
@@ -71,7 +65,7 @@ async function logCurrentPath(path, previousPath) {
       window.addEventListener("load", callback, { once: true });
     }
   }
-  
+
   history.pushState = function (...args) {
     const currentPreviousPath = previousPath;
     const result = pushState.apply(this, args);
@@ -80,7 +74,7 @@ async function logCurrentPath(path, previousPath) {
     waitForPageLoad(() => logCurrentPath(currentPath, currentPreviousPath));
     return result;
   };
-  
+
   history.replaceState = function (...args) {
     const currentPreviousPath = previousPath;
     const result = replaceState.apply(this, args);
@@ -89,7 +83,7 @@ async function logCurrentPath(path, previousPath) {
     waitForPageLoad(() => logCurrentPath(currentPath, currentPreviousPath));
     return result;
   };
-  
+
   waitForPageLoad(() => {
     const currentPath = window.location.pathname;
     logCurrentPath(currentPath, null);
