@@ -50,6 +50,9 @@ async function logCurrentPath(path, previousPath) {
     } else if (path.includes("wheel")) {
       wheelInitialize();
     }
+     else if (path.includes("welcomebonus")) {
+      wheelInitialize();
+    }
   }, 400);
 }
 
