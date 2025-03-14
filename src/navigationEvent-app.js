@@ -54,7 +54,7 @@ async function logCurrentPath(path, previousPath) {
       wheelInitialize();
     }
     else if (path.includes("betprogressbar")) {
-      getget();
+      document.getElementById('progressbarbutton').click();
     }
   }, 400);
 }
