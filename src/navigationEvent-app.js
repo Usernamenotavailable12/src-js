@@ -1,30 +1,60 @@
 var leaderboardTable;
 
 function leaderboardInitialize() {
-  let attempts = 0;
   const maxAttempts = 10;
-  const waitForElement = () => {
-    if (document.getElementById("tournamentData")) {
-      try {
-        leaderboardTable = new FullLeaderboardTable();
-      } catch (e) {
-        console.error("logCurrentPath:", e);
-        setTimeout(() => logCurrentPath(window.location.pathname), 1000);
+  const retryInterval = 300;
+  let attempts = 0;
+  
+  const parseTournamentData = (data) => {
+      if (!data) return [];
+      
+      const segments = data.split(',');
+      const tournamentsList = [];
+      
+      for (let i = 0; i < segments.length; i += 2) {
+          if (i + 1 < segments.length) {
+              const id = segments[i].trim();
+              const count = parseInt(segments[i + 1].trim(), 10) || 0;
+              
+              if (id) {
+                  tournamentsList.push({ id, count });
+              }
+          }
       }
-    } else {
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(waitForElement, 300);
-      } else {
-        console.error(
-          "logCurrentPath: Maximum attempts reached waiting for tournamentData."
-        );
-      }
-    }
+      
+      return tournamentsList;
   };
 
-  // Invoke the function to start waiting for the element
-  waitForElement();
+  const initializeLeaderboard = async () => {
+      const tournamentDataElement = document.getElementById('tournamentData');
+      const tournamentData = tournamentDataElement?.textContent;
+      
+      if (tournamentData) {
+          try {
+              const tournamentsList = parseTournamentData(tournamentData);
+              
+              if (tournamentsList.length > 0) {
+                  leaderboardTable = new FullLeaderboardTable(tournamentsList, document.getElementById('leaderboardLoader'));
+              } else {
+                  console.warn("No valid tournament data found");
+              }
+          } catch (error) {
+              console.error("Failed to initialize leaderboard:", error);
+          }
+      } else {
+          attempts++;
+          if (attempts < maxAttempts) {
+              setTimeout(initializeLeaderboard, retryInterval);
+          } else {
+              console.error(
+                  "Maximum attempts reached waiting for tournament data element."
+              );
+          }
+      }
+  };
+  
+  initializeLeaderboard();
+  
 }
 
 function wheelInitialize() {
@@ -56,6 +86,7 @@ async function logCurrentPath(path, previousPath) {
   }, 400);
 }
 
+addEventListener("load", (event) => {
 (function (history) {
   const pushState = history.pushState;
   const replaceState = history.replaceState;
@@ -93,3 +124,4 @@ async function logCurrentPath(path, previousPath) {
     previousPath = currentPath;
   });
 })(window.history);
+});
