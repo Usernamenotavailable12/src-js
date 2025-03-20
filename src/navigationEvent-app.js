@@ -58,13 +58,11 @@ function leaderboardInitialize() {
 }
 
 function wheelInitialize() {
-  setTimeout(() => {
     fetchWheelData().then((data) => {
       if (data?.length > 0) {
         selectFortuneWheel(data[0], 1);
       }
     });
-  }, 1000);
 }
 
 async function logCurrentPath(path, previousPath) {
@@ -74,7 +72,6 @@ async function logCurrentPath(path, previousPath) {
   }
 
   // INIT
-  setTimeout(() => {
     if (path.includes("leaderboard")) {
       leaderboardInitialize();
     } else if (path.includes("wheel")) {
@@ -83,7 +80,6 @@ async function logCurrentPath(path, previousPath) {
      else if (path.includes("welcomebonus")) {
       wheelInitialize();
     }
-  }, 400);
 }
 
 addEventListener("load", (event) => {
