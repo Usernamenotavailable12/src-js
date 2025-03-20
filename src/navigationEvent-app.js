@@ -58,11 +58,27 @@ function leaderboardInitialize() {
 }
 
 function wheelInitialize() {
-    fetchWheelData().then((data) => {
-      if (data?.length > 0) {
-        selectFortuneWheel(data[0], 1);
+  let counter = 0;
+  let timeoutTime = 200; 
+  let maxTryes = 5;
+  const drawWheel = (data) => {
+      try{
+          selectFortuneWheel(data[0], 1);
       }
-    });
+      catch(e){
+          if( counter < maxTryes ){
+              counter++;
+              setTimeout(() => {
+                  drawWheel();
+              }, timeoutTime);
+          }
+      }
+  }
+  fetchWheelData().then((data) => {
+    if (data?.length > 0) {
+      drawWheel(data);
+    }
+  });
 }
 
 async function logCurrentPath(path, previousPath) {
