@@ -2,7 +2,7 @@ var leaderboardTable;
 
 function leaderboardInitialize() {
   const maxAttempts = 10;
-  const retryInterval = 300;
+  const retryInterval = 1000;
   let attempts = 0;
   
   const parseTournamentData = (data) => {
