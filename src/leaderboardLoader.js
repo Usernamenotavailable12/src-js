@@ -5,626 +5,237 @@ function maskUsername(username, currentUserId, userId) {
 }
 
 class FullLeaderboardTable {
-    leaderboardsDivs = [];
-    fullLeaderboardTableHead = document.createElement('div');
-    fullLeaderboardTableBody = document.createElement('div');
-    parent = document.getElementById('leaderboardLoader');
-    locale = document.documentElement.getAttribute('lang') || 'en';
-
-    constructor() {
-        this.init();
+    leaderboardsInfo = [];
+    parrentElement = null;
+    leaderboardButtonsBox = null;
+    leaderboardBody = null;
+    leaderboardTable = null;
+    leaderboardsData = new Map();
+    userData = new Map();
+    leaderboardTableWebSocket = null;
+    loading = true;
+    spinner = null;
+    currentUserInfo = {
+        id: null,
+        nickname: null
     }
+    locale = 'en';
 
-    init() {
-        // Setup elements once
-        this.setupElements();
-        this.FullDrawTournaments();
+constructor(leaderboardsInfo, parrentElement) {
+        this.leaderboardsInfo = leaderboardsInfo;
+        this.parrentElement = parrentElement;
+        this.currentUserInfo.id = extractAuthDataFromCookie()?.userId;
+        this.locale = document.documentElement.getAttribute('lang') || 'en';
+        this.getAllData();
+
+
+        const loaderHTML = `
+                <mat-spinner class="mat-loader" style="display: inline-block;">
+                    <div class=" loader">   
+                    </mat-spinner> 
+                    `;
+
+        const leaderboardHTML = `
+        <style>
+        .active{
+        display: block !important;
+        }
+        mat-spinner {
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
+            background-image: url("https://images.takeshape.io/5da2b4d5-59f6-412a-82c3-f6a272b532be/dev/aaeef128-13e0-4317-a4e9-815bb063ebbd/spinner-logo-2-bat.png") !important;
+        }
+            #leaderboardLoader{
+    position: relative;
+    min-height: 200px;
+}
+        .mat-loader {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+           .loader {
+            width: 90px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 8px solid #bf307c;
+            animation:
+                l20-1 1.2s infinite linear alternate,
+                l20-2 2.4s infinite linear;
+            }
+
+            @keyframes l20-1 {
+            0%    {clip-path: polygon(50% 50%, 0 0, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%);}
+            12.5% {clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 0%, 100% 0%, 100% 0%);}
+            25%   {clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 100%, 100% 100%, 100% 100%);}
+            50%   {clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 100%, 50% 100%, 0% 100%);}
+            62.5% {clip-path: polygon(50% 50%, 100% 0, 100% 0%, 100% 0%, 100% 100%, 50% 100%, 0% 100%);}
+            75%   {clip-path: polygon(50% 50%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 50% 100%, 0% 100%);}
+            100%  {clip-path: polygon(50% 50%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 0% 100%);}
+            }
+
+            @keyframes l20-2 { 
+            0%    {transform: scaleY(1) rotate(0deg);}
+            49.99% {transform: scaleY(1) rotate(135deg);}
+            50%   {transform: scaleY(-1) rotate(0deg);}
+            100%  {transform: scaleY(-1) rotate(-135deg);}
+            }
+
+            .leaderboard-table-row {
+                opacity: 1;
+                transition: opacity 0.3s ease;
+            }
+
+
+        </style>
+                    <div class="leaderboard-table-main" style="display:none;">
+                        <div class="leaderboard-header">
+                            <div class="leaderboard-buttons-box">
+                            </div>
+                        </div>
+                        <div class="leaderboard-body"></div>
+                `;
+
+        this.parrentElement.innerHTML = leaderboardHTML;
+        this.parrentElement.innerHTML += loaderHTML;
+        this.parrentElement.innerHTML += `</div>`;
+        this.leaderboardTable = this.parrentElement.querySelector('.leaderboard-table-main');
+        this.leaderboardButtonsBox = this.parrentElement.querySelector('.leaderboard-buttons-box');
+        this.leaderboardHeader = this.parrentElement.querySelector('.leaderboard-header');
+        this.leaderboardBody = this.parrentElement.querySelector('.leaderboard-body');
+
+        const leftButton = document.createElement('button');
+        leftButton.innerHTML = `<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     viewBox="0 0 330 330" xml:space="preserve" style="transform: scaleX(-1);">
+<path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001
+    c-5.857,5.858-5.857,15.355,0.001,21.213l139.393,139.39L79.393,304.394c-5.857,5.858-5.857,15.355,0.001,21.213
+    C82.322,328.536,86.161,330,90,330s7.678-1.464,10.607-4.394l149.999-150.004c2.814-2.813,4.394-6.628,4.394-10.606
+    C255,161.018,253.42,157.202,250.606,154.389z"/>
+</svg>`;
+        leftButton.classList.add('leaderboard-header-left-scroll-button');
+        leftButton.classList.add('leaderboard-header-scroll-button');
+        leftButton.addEventListener('click', () => this.scrollButtonsLeft());
+        
+        const rightButton = document.createElement('button');
+        rightButton.innerHTML = `<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 330 330" xml:space="preserve">
+<path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001
+	c-5.857,5.858-5.857,15.355,0.001,21.213l139.393,139.39L79.393,304.394c-5.857,5.858-5.857,15.355,0.001,21.213
+	C82.322,328.536,86.161,330,90,330s7.678-1.464,10.607-4.394l149.999-150.004c2.814-2.813,4.394-6.628,4.394-10.606
+	C255,161.018,253.42,157.202,250.606,154.389z"/>
+</svg>`;
+        rightButton.classList.add('leaderboard-header-right-scroll-button');
+        rightButton.classList.add('leaderboard-header-scroll-button');
+        rightButton.addEventListener('click', () => this.scrollButtonsRight());
+
+        this.leaderboardHeader.appendChild(leftButton);
+        this.leaderboardHeader.appendChild(this.leaderboardButtonsBox);
+        this.leaderboardHeader.appendChild(rightButton);
+
+        this.drawLeaderboardHeader();
     }
-
-    setupElements() {
-        if (!this.parent) return;
-
-        this.fullLeaderboardTableHead.id = 'leaderboard-table-header';
-        this.fullLeaderboardTableBody.classList.add('leaderboard-table-body');
-
-        // Append elements in a single batch using document fragment
-        const fragment = document.createDocumentFragment();
-        fragment.appendChild(this.fullLeaderboardTableHead);
-        fragment.appendChild(this.fullLeaderboardTableBody);
-        this.parent.appendChild(fragment);
-    }
-
     destroy() {
-        this.leaderboardsDivs.forEach(div => div.item.destroy());
-        this.fullLeaderboardTableHead.remove();
-        this.fullLeaderboardTableBody.remove();
-        return null;
+        this.leaderboardTableWebSocket.close();
+        this.parrentElement.removeChild(this.parrentElement.querySelector(".leaderboard-table-main"));
+        this.leaderboardTableWebSocket = null;
     }
 
-    async FullDrawTournaments() {
-        const tournamentData = document.getElementById('tournamentData')?.textContent;
-        if (!tournamentData) return;
+    async getAllData() {
+        try {
+            let DateNow = Date.now();
 
-        const tournamentItems = this.parseTournamentData(tournamentData);
-        await this.createLeaderboardTables(tournamentItems);
-        this.drawLeaderboardTableHeader();
-    }
-
-    parseTournamentData(data) {
-        const segments = data.split(',');
-        const items = [];
-
-        for (let i = 0; i < segments.length; i += 2) {
-            if (i + 1 < segments.length) {
-                items.push({
-                    id: segments[i].trim(),
-                    count: parseInt(segments[i + 1].trim(), 10) || 0
-                });
+            if (this.currentUserInfo.id) {
+                this.getUserNickname(this.currentUserInfo.id);
             }
-        }
 
-        return items;
-    }
+            for (const leaderboardInfo of this.leaderboardsInfo) {
+                const lbPromise = this.getTournamentData(leaderboardInfo.id, leaderboardInfo.count, DateNow);
+                const uPromise = this.currentUserInfo.id
+                    ? this.getUserData(leaderboardInfo.id, this.currentUserInfo.id, DateNow)
+                    : Promise.resolve(null);
 
-    async createLeaderboardTables(items) {
-        for (const item of items) {
-            const div = await FullLeaderboardTable.LeaderboardTableDrawer.create(
-                this.fullLeaderboardTableBody,
-                item.id,
-                item.count
-            );
+                const [lbInfo, uInfo] = await Promise.all([lbPromise, uPromise]);
 
-            if (div) {
-                this.leaderboardsDivs.push({
-                    id: item.id,
-                    item: div,
-                    startsAt: div.data.startsAt,
-                    endsAt: div.data.endsAt
-                });
+                this.drawTableHeaderButton(leaderboardInfo.id, lbInfo);
+                this.drawLeaderboardBody(lbInfo, uInfo, leaderboardInfo.id);
             }
-        }
-    }
 
-    formatTournamentDates(startDateStr, endDateStr) {
-        const start = new Date(startDateStr);
-        const end = new Date(endDateStr);
-
-        // Calculate day difference
-        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-        const diffDays = Math.ceil((endDay - startDay) / (1000 * 60 * 60 * 24));
-
-        // Get date text
-        const dateText = diffDays <= 1 ?
-            start.getDate().toString() :
-            `${start.getDate()} - ${end.getDate()}`;
-
-        // Month mapping for localization
-        const monthNames = {
-            'ka': ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
-                'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი']
-        };
-
-        let monthText;
-        if (start.getMonth() !== end.getMonth() || start.getFullYear() !== end.getFullYear()) {
-            const startMonth = monthNames[this.locale]?.[start.getMonth()] ||
-                start.toLocaleString(this.locale, { month: 'long' });
-            const endMonth = monthNames[this.locale]?.[end.getMonth()] ||
-                end.toLocaleString(this.locale, { month: 'long' });
-            monthText = `${startMonth} - ${endMonth}`;
-        } else {
-            monthText = monthNames[this.locale]?.[start.getMonth()] ||
-                start.toLocaleString(this.locale, { month: 'long' });
-        }
-
-        return { dateText, monthText };
-    }
-
-    drawLeaderboardTableHeader() {
-        const nowDate = Date.now();
-        const fragment = document.createDocumentFragment();
-
-        this.leaderboardsDivs.forEach(div => {
-            const button = this.createHeaderButton(div, nowDate);
-            fragment.appendChild(button);
-        });
-
-        this.fullLeaderboardTableHead.appendChild(fragment);
-    }
-
-    createHeaderButton(div, nowDate) {
-        const button = document.createElement('button');
-        button.id = `leaderboard-table-header-button-${div.id}`;
-        button.className = "leaderboard-table-header-button";
-
-        // Create date elements
-        const { dateText, monthText } = this.formatTournamentDates(div.startsAt, div.endsAt);
-        const dateCopy = document.createElement("span");
-        const monthCopy = document.createElement("span");
-
-        dateCopy.textContent = dateText;
-        monthCopy.textContent = " " + monthText;
-        dateCopy.className = "leaderboard-table-header-button-date";
-        monthCopy.className = "leaderboard-table-header-button-month";
-
-        button.appendChild(dateCopy);
-        button.appendChild(monthCopy);
-
-        // Set click handler
-        button.onclick = () => this.handleHeaderButtonClick(button, div.id);
-
-        // Check if this tournament is current
-        const startsAtTimestamp = new Date(div.startsAt).getTime();
-        const endsAtTimestamp = new Date(div.endsAt).getTime();
-
-        if (nowDate > startsAtTimestamp && nowDate < endsAtTimestamp) {
-            this.activateTable(div.id);
-            button.className = "leaderboard-table-header-button-active";
-        }
-
-        return button;
-    }
-
-    handleHeaderButtonClick(clickedButton, tableId) {
-        // Deactivate all buttons
-        const activeButtons = document.getElementsByClassName("leaderboard-table-header-button-active");
-        Array.from(activeButtons).forEach(el => {
-            el.className = "leaderboard-table-header-button";
-        });
-
-        // Hide all tables
-        const allTables = document.getElementsByClassName("leaderboard-table-element");
-        Array.from(allTables).forEach(table => {
-            this.hideTable(table);
-        });
-
-        // Activate clicked button and show corresponding table
-        clickedButton.className = "leaderboard-table-header-button-active";
-        this.activateTable(tableId);
-    }
-
-    hideTable(table) {
-        table.style.position = "absolute";
-        table.style.visibility = "hidden";
-        table.style.opacity = 0;
-        table.style.transition = "opacity 0.5s ease, visibility 0s linear 0.5s";
-    }
-
-    activateTable(tableId) {
-        const tableToShow = document.getElementById(`leaderboard-table-element-${tableId}`);
-        if (tableToShow) {
-            tableToShow.style.position = "absolute";
-            tableToShow.style.visibility = "visible";
-            tableToShow.style.opacity = 1;
-            tableToShow.style.transition = "opacity 0.5s ease, visibility 0s linear 0s";
-        }
-    }
-
-    static LeaderboardTableDrawer = class LeaderboardTableDrawer {
-        leaderboardTableParentElement;
-        currentUserId;
-        chickenDinner = { isWinner: false, index: null };
-        data;
-        locale = 'ka';
-        actionsCount;
-        endsAt;
-        startsAt;
-        leaderboardId;
-        leaderboardTableWebSocket;
-        currUserInfo = {
-            position: null,
-            points: null,
-            user: {
-                nickname: null
+            if (this.leaderboardsInfo.length <= 1) {
+                this.leaderboardHeader.style.display = "none";
             }
-        };
 
-        destroy() {
-
-            this.leaderboardTableParentElement.remove();
-            this.data = null;
-            this.destroyWebSocket();
-            return null;
-        }
-
-        constructor(King, leaderboardId, actionsCount) {
-            this.leaderboardId = leaderboardId;
-            this.leaderboardTableParentElement = document.createElement('div');
-            King.appendChild(this.leaderboardTableParentElement);
-            this.leaderboardTableParentElement.classList.add('leaderboard-table-element');
-
-            this.leaderboardTableParentElement.style.position = "absolute";
-            this.leaderboardTableParentElement.style.visibility = "hiden";
-            this.leaderboardTableParentElement.style.opacity = 0;
-            this.leaderboardTableParentElement.style.transition = "opacity 0.5s ease, visibility 0s linear 0s";
-
-            this.leaderboardTableParentElement.id = `leaderboard-table-element-${leaderboardId}`;
-            this.currentUserId = extractAuthDataFromCookie()?.userId,
-                this.actionsCount = actionsCount;
-            this.locale = document.documentElement.getAttribute('lang') || 'en';
+        } catch (error) {
+            console.error("Error in getAllData:", error);
+        } finally {
+            this.setLoading(false);
+            this.updateLeaderboards();
             this.createWebSocket();
-        }
+            this.makeElementDraggable(document.getElementsByClassName("leaderboard-buttons-box")[0], {
+                speedMultiplier: 1.0,
+                enableTouch: true,
+                dragCursor: 'grabbing'
+            });
 
-        static async create(King, leaderboardId, actionsCount) {
-            if (!document.getElementById(`leaderboard-table-element-${leaderboardId}`)) {
-                const instance = new LeaderboardTableDrawer(King, leaderboardId, actionsCount);
-                await instance.initialize(leaderboardId, actionsCount);
-                return instance;
-            } else {
-                return null;
-            }
-        }
 
-        destroyWebSocket() {
-            this.leaderboardTableWebSocket.close();
-        }
+            const ele = document.getElementsByClassName("leaderboard-buttons-box")[0];
 
-        createWebSocket() {
-            // Create a singleton connection if possible
-            const socket = new WebSocket('wss://www.ambassadoribet.com/_internal/ws/default/default/');
-            this.leaderboardTableWebSocket = socket;
-
-            const messageHandlers = {
-                connection_ack: () => this.sendSubscription(),
-                data: (data) => this.handleSubscriptionData(data)
+            const hasVerticalScroll = (element) => {
+                return element.scrollWidth > element.clientWidth;
             };
 
-            socket.addEventListener('open', () => {
-                socket.send(JSON.stringify({
-                    type: 'connection_init',
-                    payload: {}
-                }));
-            });
-
-            socket.addEventListener('message', (event) => {
-                const data = JSON.parse(event.data);
-                const handler = messageHandlers[data.type];
-                if (handler) handler(data);
-            });
-
-            socket.addEventListener('error', (error) => {
-                console.error('WebSocket error:', error);
-            });
-        }
-
-        sendSubscription() {
-            this.leaderboardTableWebSocket.send(JSON.stringify({
-                id: '1',
-                type: 'start',
-                payload: {
-                    query: `
-                    subscription TournamentUpdatedEx($tournamentId: ID) {
-                      userTournamentUpdatedEx(tournamentId: $tournamentId) {
-                        userTournament {
-                          points
-                          position
-                          userId
-                          user {
-                            nickname
-                          }
-                        }
-                      }
-                    }`,
-                    variables: { tournamentId: this.leaderboardId },
-                }
-            }));
-        }
-
-        handleSubscriptionData(data) {
-            const userTournament = data.payload?.data?.userTournamentUpdatedEx?.userTournament;
-            if (userTournament) {
-                this.updateTableData(userTournament);
-            }
-        }
-
-        // Optimized update table data method
-        updateTableData(data) {
-            // Check if the update is relevant
-            const shouldUpdateTable = data.points >= this.getLowestPoints();
-
-            if (shouldUpdateTable) {
-                this.updateTableBody(data);
+            if (!hasVerticalScroll(ele)) {
+                Array.from(document.getElementsByClassName("leaderboard-header-scroll-button")).forEach((btn) => {
+                    btn.style.display = "none";
+                });
             }
 
-            if (data.userId === this.currentUserId) {
-                this.updateCurrentUserData(data);
-            }
         }
+    }
 
-        getLowestPoints() {
-            const lastIndex = this.actionsCount - 1;
-            return this.data?.userTournamentConnection.edges[lastIndex]?.node.points || 0;
-        }
+    scrollButtonsRight() {
+        if (!this.leaderboardButtonsBox) return;
+        
+        const buttons = Array.from(this.leaderboardButtonsBox.children);
+        if (buttons.length === 0) return;
+        const value = getComputedStyle(this.leaderboardButtonsBox).getPropertyValue('--gap-between-buttons');
+        const firstButton = buttons[0];
+        const buttonWidth = firstButton.offsetWidth;
+        
+        const currentScrollLeft = this.leaderboardButtonsBox.scrollLeft + 30;
+        
+        this.leaderboardButtonsBox.scrollTo({
+            left: currentScrollLeft + buttonWidth,
+            behavior: 'smooth'
+        });
+    }
+    
+    scrollButtonsLeft() {
+        if (!this.leaderboardButtonsBox) return;
+        
+        const buttons = Array.from(this.leaderboardButtonsBox.children);
+        if (buttons.length === 0) return;
+        const value = getComputedStyle(this.leaderboardButtonsBox).getPropertyValue('--gap-between-buttons');
+        const firstButton = buttons[0];
+        const buttonWidth = firstButton.offsetWidth;
+        
+        const currentScrollLeft = this.leaderboardButtonsBox.scrollLeft - 30;
+        
+        this.leaderboardButtonsBox.scrollTo({
+            left: Math.max(0, currentScrollLeft - buttonWidth),
+            behavior: 'smooth'
+        });
+    }
+    
 
-        updateCurrentUserData(data, shouldUpdate) {
-            const div = this.leaderboardTableParentElement.getElementsByClassName("leaderboard-row-user")[0];
-
-            if (!div) return;
-
-            const pointsElement = div.getElementsByClassName("table-points-user")[0];
-            const positionElement = div.getElementsByClassName("table-position-user")[0];
-
-            this.animateCounter(pointsElement, this.currUserInfo.points, data.points);
-            this.animateCounter(positionElement, this.currUserInfo.position, data.position);
-
-            this.currUserInfo.points = data.points;
-            this.currUserInfo.position = data.position;
-        }
-
-        // Improved animation counter
-        animateCounter(element, start, end, duration = 500) {
-            if (!element || start === end) return;
-
-            // Use requestAnimationFrame for smooth animation
-            let startTime = null;
-            const animate = (timestamp) => {
-                if (!startTime) startTime = timestamp;
-                const progress = Math.min((timestamp - startTime) / duration, 1);
-
-                const value = Math.floor(start + (end - start) * progress);
-                element.textContent = value;
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    element.textContent = end;
-                }
-            };
-
-            requestAnimationFrame(animate);
-        }
-
-        recurseGetPosition() {
-
-        }
-
-        // More efficient DOM updates with table rows
-        updateTableBody(data) {
-            // Find user in current data
-            const userIndex = this.findUserIndex(data.userId);
-
-            if (userIndex !== -1) {
-                this.updateExistingUser(data, userIndex);
-            } else if (data.points > this.getLowestPoints()) {
-                this.addNewUser(data);
-            }
-        }
-
-        findUserIndex(userId) {
-            return this.data.userTournamentConnection.edges.findIndex(
-                item => item.node.user.userId === userId
-            );
-        }
-
-        updateTableBody(data) {
-            // Find the user in our current data
-            let userIndex = -1;
-            this.data.userTournamentConnection.edges.forEach((item, index) => {
-                if (item.node.user.userId === data.userId) {
-                    userIndex = index;
-                }
-            });
-
-            // If user found, update their points
-            if (userIndex !== -1) {
-                // Store old points for animation
-                const oldPoints = this.data.userTournamentConnection.edges[userIndex].node.points;
-
-                // Update points in data structure
-                this.data.userTournamentConnection.edges[userIndex].node.points = data.points;
-
-                // Animate the points change in the current position
-                const pointsElement = this.leaderboardTableParentElement.querySelector(`#table-points-${userIndex + 1}`);
-                if (pointsElement) {
-                    this.animateCounter(pointsElement, oldPoints, data.points);
-                }
-
-                // Check if we need to reposition this user
-                let newPosition = userIndex;
-                // Find the new position for this user based on points
-                while (newPosition > 0 &&
-                    this.data.userTournamentConnection.edges[newPosition - 1].node.points < data.points) {
-                    newPosition--;
-                }
-
-                // If position changed, rearrange the leaderboard
-                if (newPosition !== userIndex) {
-                    // Save the user data that needs to move up
-                    const movingUser = this.data.userTournamentConnection.edges[userIndex];
-
-                    // Apply fade-out to all affected rows
-                    for (let i = newPosition; i <= userIndex; i++) {
-                        const rowElement = this.leaderboardTableParentElement.querySelector(`#leaderboard-row-${i + 1}`);
-                        if (rowElement) {
-                            rowElement.classList.add('fade-out');
-                        }
-                    }
-
-                    // Shift all entries between new position and old position
-                    for (let i = userIndex; i > newPosition; i--) {
-                        // Move data one position down
-                        this.data.userTournamentConnection.edges[i] = this.data.userTournamentConnection.edges[i - 1];
-                    }
-
-                    // Place the moving user at their new position
-                    this.data.userTournamentConnection.edges[newPosition] = movingUser;
-
-                    // Update UI with animation
-                    setTimeout(() => {
-                        for (let i = newPosition; i <= userIndex; i++) {
-                            const userItem = this.data.userTournamentConnection.edges[i].node;
-                            const userElement = this.leaderboardTableParentElement.querySelector(`#table-user-name-${i + 1}`);
-                            const pointsElement = this.leaderboardTableParentElement.querySelector(`#table-points-${i + 1}`);
-                            const rowElement = this.leaderboardTableParentElement.querySelector(`#leaderboard-row-${i + 1}`);
-
-                            if (userElement && pointsElement && rowElement) {
-                                userElement.textContent = maskUsername(
-                                    userItem.user.displayName,
-                                    this.currentUserId,
-                                    userItem.user.userId
-                                );
-                                pointsElement.textContent = userItem.points;
-
-                                // If this is the current user's row, mark it
-                                if (userItem.user.userId === this.currentUserId) {
-                                    rowElement.classList.add('winner-winner-chicken-dinner');
-                                } else {
-                                    rowElement.classList.remove('winner-winner-chicken-dinner');
-                                }
-
-                                rowElement.classList.remove('fade-out');
-                                rowElement.classList.add('fade-in');
-
-                                // Force a repaint to ensure animation runs
-                                void rowElement.offsetWidth;
-                            }
-                        }
-                    }, 1000);
-                }
-            } else {
-                // New user entering the leaderboard
-                // Check if they should be added (score high enough)
-                const lowestPoints = this.data.userTournamentConnection.edges[this.actionsCount - 1].node.points;
-                if (data.points > lowestPoints) {
-                    // Find insertion position
-                    let insertPosition = this.data.userTournamentConnection.edges.findIndex(
-                        item => item.node.points < data.points
-                    );
-
-                    if (insertPosition === -1) {
-                        insertPosition = this.actionsCount - 1;
-                    }
-
-                    // Fade out all rows that will change
-                    for (let i = insertPosition; i < this.actionsCount; i++) {
-                        const rowElement = this.leaderboardTableParentElement.querySelector(`#leaderboard-row-${i + 1}`);
-                        if (rowElement) {
-                            rowElement.classList.add('fade-out');
-                        }
-                    }
-
-                    // Update data structure
-                    // Remove the last entry
-                    this.data.userTournamentConnection.edges.pop();
-
-                    // Insert the new entry at the right position
-                    this.data.userTournamentConnection.edges.splice(insertPosition, 0, {
-                        node: {
-                            points: data.points,
-                            user: {
-                                userId: data.userId,
-                                displayName: data.user.nickname
-                            }
-                        }
-                    });
-
-                    // Update UI with animation
-                    setTimeout(() => {
-                        for (let i = insertPosition; i < this.actionsCount; i++) {
-                            const userItem = this.data.userTournamentConnection.edges[i].node;
-                            const userElement = this.leaderboardTableParentElement.querySelector(`#table-user-name-${i + 1}`);
-                            const pointsElement = this.leaderboardTableParentElement.querySelector(`#table-points-${i + 1}`);
-                            const rowElement = this.leaderboardTableParentElement.querySelector(`#leaderboard-row-${i + 1}`);
-
-                            if (userElement && pointsElement) {
-                                userElement.textContent = maskUsername(
-                                    userItem.user.displayName,
-                                    this.currentUserId,
-                                    userItem.user.userId
-                                );
-                                pointsElement.textContent = userItem.points;
-
-                                // If this is the current user's row, mark it
-                                if (userItem.user.userId === this.currentUserId) {
-                                    rowElement.classList.add('winner-winner-chicken-dinner');
-                                } else {
-                                    rowElement.classList.remove('winner-winner-chicken-dinner');
-                                }
-
-                                rowElement.classList.remove('fade-out');
-                                rowElement.classList.add('fade-in');
-                            }
-                        }
-                    }, 1000);
-                }
-            }
-        }
-
-
-        async initialize(leaderboardId, actionsCount) {
-            this.drawLeaderboardTableHeader(this.leaderboardTableParentElement);
-            await this.getData(leaderboardId, actionsCount);
-        }
-
-        async getUserInfo(tournamentId, userId) {
-            try {
-                const [userTournamentData, userNickname] = await Promise.all([
-                    this.fetchUserTournamentData(tournamentId, userId),
-                    this.fetchUserNickname(userId)
-                ]);
-
-                if (userTournamentData) {
-                    this.currUserInfo = {
-                        ...this.currUserInfo,
-                        points: userTournamentData.points,
-                        position: userTournamentData.position
-                    };
-                }
-
-                if (userNickname) {
-                    if (!this.currUserInfo.user) this.currUserInfo.user = {};
-                    this.currUserInfo.user.nickname = userNickname;
-                }
-            } catch (error) {
-                console.error("Error fetching user info:", error);
-            }
-        }
-
-        async fetchUserTournamentData(tournamentId, userId) {
-            const query = `query UserTournamentConnection($userId: ID, $tournamentId: ID) {
-                userTournamentConnection(userId: $userId, tournamentId: $tournamentId) {
-                    edges {
-                        node {
-                            points
-                            position
-                        }
-                    }
-                }
-            }`;
-
-            const variables = {
-                tournamentId,
-                userId,
-                _nonce: Date.now()
-            };
-
-            const data = await this.executeGraphQLQuery(query, variables);
-            return data?.data?.userTournamentConnection?.edges[0]?.node;
-        }
-
-        async fetchUserNickname(userId) {
-            const query = `query User($userId: ID!) {
-                user(userId: $userId) {
-                    nickname
-                }
-            }`;
-
-            const variables = { userId };
-            const data = await this.executeGraphQLQuery(query, variables);
-            return data?.data?.user?.nickname;
-        }
-
-        async executeGraphQLQuery(query, variables) {
-            const response = await fetch(`https://www.ambassadoribet.com/_internal/gql/?_${Date.now()}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query, variables })
-            });
-
-            return await response.json();
-        }
-
-        async getData(leaderboardId, actionsCount) {
+    async getTournamentData(leaderboardId, actionsCount, DateNow) {
+        try {
             const query = `
                 query TournamentConnection($tournamentId: ID, $status: [TournamentStatus!], $first: Int, $orderBy: [UserTournamentOrderByInput!]) {
                     tournamentConnection(tournamentId: $tournamentId, status: $status) {
@@ -685,8 +296,6 @@ class FullLeaderboardTable {
                 }
             `;
 
-            let DateNow = Date.now();
-
             const variables = {
                 tournamentId: leaderboardId,
                 status: ["ACTIVE", "FINISHED", "PREPARING"],
@@ -695,231 +304,813 @@ class FullLeaderboardTable {
                 _nonce: DateNow
             };
 
-            try {
-                const response = await fetch(`https://www.ambassadoribet.com/_internal/gql/?_${DateNow}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ query, variables })
-                });
+            const data = await this.executeGraphQLQuery(query, variables);
+            const tournamentNode = data?.data?.tournamentConnection?.edges?.[0]?.node;
 
-                const data = await response.json();
+            if (!tournamentNode) {
+                console.warn("Tournament data is missing for leaderboardId:", leaderboardId);
+                return null;
+            }
 
-                if (!data?.data?.tournamentConnection) {
-                    console.error("Invalid tournament data:", data);
-                    return;
+            const result = {
+                usersData: tournamentNode.userTournamentConnection.edges,
+                rewardsData: tournamentNode.actions,
+                endsAt: tournamentNode.endsAt,
+                startsAt: tournamentNode.startsAt
+            };
+
+            this.leaderboardsData.set(leaderboardId, result);
+            return result;
+
+        } catch (error) {
+            console.error("Error fetching tournament data:", error);
+            return null;
+        }
+    }
+
+    async getUserData(leaderboardId, userId, DateNow) {
+        try {
+            const query = `
+                query UserTournamentConnection($userId: ID, $tournamentId: ID) {
+                    userTournamentConnection(userId: $userId, tournamentId: $tournamentId) {
+                        edges {
+                            node {
+                                points
+                                position
+                            }
+                        }
+                    }
                 }
+            `;
 
-                this.data = data.data.tournamentConnection?.edges[0]?.node;
-                this.drawLeaderboardTableRows(this.data);
-                this.drawUserInfo(this.leaderboardTableParentElement);
-            } catch (error) {
-                console.error("Error fetching leaderboard data:", error);
+            const variables = {
+                tournamentId: leaderboardId,
+                userId,
+                _nonce: DateNow
+            };
+
+            const data = await this.executeGraphQLQuery(query, variables);
+            const userNode = data?.data?.userTournamentConnection?.edges?.[0]?.node;
+
+            if (!userNode) {
+                console.warn("User data is missing for userId:", userId, "in leaderboard:", leaderboardId);
+                return null;
+            }
+
+            const result = {
+                points: userNode.points,
+                position: userNode.position,
+                isWinner: null
+            };
+
+            this.userData.set(leaderboardId, result);
+            return result;
+
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            return null;
+        }
+    }
+
+    async getUserNickname(userId) {
+        const query = `query User($userId: ID!) {
+            user(userId: $userId) {
+                nickname
+            }
+        }`;
+
+        const variables = { userId };
+
+        try {
+            const data = await this.executeGraphQLQuery(query, variables);
+            this.currentUserInfo.nickname = data?.data?.user?.nickname;
+        } catch (error) {
+            console.error("Error fetching user nickname:", error);
+        }
+    }
+
+    async createWebSocket() {
+        const socket = new WebSocket('wss://www.ambassadoribet.com/_internal/ws/default/default/');
+        this.leaderboardTableWebSocket = socket;
+
+        const messageHandlers = {
+            connection_ack: () => this.sendSubscriptions(),
+            data: (data) => this.handleSubscriptionData(data)
+        };
+
+        socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({
+                type: 'connection_init',
+                payload: {}
+            }));
+        });
+        socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            const handler = messageHandlers[data.type];
+            if (handler) handler(data);
+        });
+
+        socket.addEventListener('error', (error) => {
+            console.error('WebSocket error:', error);
+        });
+    }
+
+    async sendSubscriptions() {
+        const subscriptions = this.leaderboardsInfo.map((leaderboard) => ({
+            tournamentId: leaderboard.id
+        }));
+
+        subscriptions.forEach(sub => {
+            this.leaderboardTableWebSocket.send(JSON.stringify({
+                id: sub.tournamentId,
+                type: 'start',
+                payload: {
+                    query: `
+                    subscription TournamentUpdatedEx($tournamentId: ID) {
+                        userTournamentUpdatedEx(tournamentId: $tournamentId) {
+                            userTournament {
+                                points
+                                position
+                                userId
+                                user {
+                                nickname
+                                }
+                            }
+                        }
+                    }`,
+                    variables: { tournamentId: sub.tournamentId },
+                }
+            }));
+        });
+    }
+
+
+    async handleSubscriptionData(data) {
+        const userTournament = data.payload?.data?.userTournamentUpdatedEx?.userTournament;
+        if (userTournament) {
+            await this.updateTableData(userTournament, data.id);
+        }
+    }
+
+    updateTableData(userTournament, leaderboardId) {
+        const shouldUpdateTable = userTournament.points >= this.getLowestPoints(leaderboardId);
+
+        if (shouldUpdateTable) {
+            this.updateTableBody(userTournament, leaderboardId);
+        }
+        if (userTournament.userId === this.currentUserInfo.id) {
+            this.updateCurrentUserData(userTournament, leaderboardId);
+        }
+    }
+
+    updateRow(rowElement, userItem, currentUserId) {
+        const nicknameElement = rowElement.querySelector('.leaderboard-row-nickname');
+        const pointsElement = rowElement.querySelector('.leaderboard-row-points');
+        const positionElement = rowElement.querySelector('.leaderboard-row-position');
+
+        if (nicknameElement && pointsElement && positionElement) {
+            positionElement.textContent = userItem.position;
+            nicknameElement.textContent = maskUsername(userItem.user.displayName, userItem.user.userId, currentUserId);
+            pointsElement.textContent = userItem.points;
+            rowElement.classList.toggle('champion', userItem.user.userId === currentUserId);
+        }
+    }
+
+    getMaxCount(leaderboardId) {
+        for (const leaderboardInfo of this.leaderboardsInfo) {
+            if (leaderboardInfo.id === leaderboardId) {
+                return leaderboardInfo.count;
+            }
+        }
+        return Infinity;
+    }
+
+    updateTableBody(userTournament, leaderboardId) {
+        const leaderboardData = this.leaderboardsData.get(leaderboardId);
+        if (!leaderboardData || !leaderboardData.usersData) return;
+
+        const tableBody = document.getElementById(`leaderboard-table-row-body-${leaderboardId}`);
+        if (!tableBody) return;
+
+        const maxCount = this.getMaxCount(leaderboardId);
+        const currentCount = Math.min(tableBody.children.length, maxCount);
+
+        let userIndex = leaderboardData.usersData.findIndex(
+            item => item.node.user.userId === userTournament.userId
+        );
+
+        const previousPositions = this.getCurrentPositions(tableBody);
+        const oldPoints = userIndex !== -1 ? leaderboardData.usersData[userIndex].node.points : null;
+
+        if (userIndex !== -1) {
+            leaderboardData.usersData[userIndex].node.points = userTournament.points;
+        } else if (leaderboardData.usersData.length < maxCount ||
+            userTournament.points > (leaderboardData.usersData[leaderboardData.usersData.length - 1]?.node.points || 0)) {
+            leaderboardData.usersData.push({
+                node: {
+                    points: userTournament.points,
+                    position: 0,
+                    user: { userId: userTournament.userId, displayName: userTournament.user?.nickname || 'Player' }
+                }
+            });
+        }
+
+        leaderboardData.usersData.sort((a, b) => b.node.points - a.node.points);
+        leaderboardData.usersData.forEach((item, idx) => item.node.position = idx + 1);
+        leaderboardData.usersData = leaderboardData.usersData.slice(0, maxCount);
+
+        const positionChanges = this.detectPositionChanges(previousPositions, leaderboardData.usersData);
+
+        if (positionChanges.length > 0) {
+            this.handlePositionChanges(tableBody, leaderboardData.usersData, positionChanges);
+        } else if (oldPoints !== null && oldPoints !== userTournament.points) {
+            this.handlePointsUpdate(tableBody, leaderboardData.usersData, userTournament.userId, oldPoints, userTournament.points);
+        }
+    }
+
+    getCurrentPositions(tableBody) {
+        const positions = {};
+        tableBody.querySelectorAll('.leaderboard-table-row').forEach(row => {
+            const userId = row.getAttribute('data-user-id');
+            const positionEl = row.querySelector('.leaderboard-row-position');
+            if (userId && positionEl) {
+                positions[userId] = parseInt(positionEl.textContent);
+            }
+        });
+        return positions;
+    }
+
+    detectPositionChanges(previousPositions, usersData) {
+        const changes = [];
+        usersData.forEach(item => {
+            const userId = item.node.user.userId;
+            const oldPos = previousPositions[userId];
+            if (oldPos && oldPos !== item.node.position) {
+                changes.push({ userId, oldPos: oldPos, newPos: item.node.position });
+            }
+        });
+        return changes;
+    }
+
+    handlePointsUpdate(tableBody, usersData, userId, oldPoints, newPoints) {
+        const rowElement = tableBody.querySelector(`[data-user-id="${userId}"]`);
+        if (!rowElement) return;
+
+        const pointsElement = rowElement.querySelector('.leaderboard-row-points');
+        if (pointsElement) {
+            this.animateCounter(pointsElement, oldPoints, newPoints);
+        }
+
+        const userIndex = usersData.findIndex(item => item.node.user.userId === userId);
+        if (userIndex !== -1) {
+            this.updateRow(rowElement, usersData[userIndex].node, this.currentUserInfo?.id);
+        }
+    }
+
+    handlePositionChanges(tableBody, usersData, positionChanges) {
+        positionChanges.forEach(change => {
+            const row = tableBody.querySelector(`[data-user-id="${change.userId}"]`);
+            if (row) row.classList.add('fade');
+        });
+
+        setTimeout(() => {
+            usersData.forEach((item, index) => {
+                let rowElement = tableBody.querySelector(`#leaderboard-table-row-body-${index + 1}`);
+                if (rowElement) {
+                    rowElement.setAttribute('data-user-id', item.node.user.userId);
+                    this.updateRow(rowElement, item.node, this.currentUserInfo?.id);
+                }
+            });
+
+            positionChanges.forEach(change => {
+                const row = tableBody.querySelector(`[data-user-id="${change.userId}"]`);
+                if (row) {
+                    row.classList.remove('fade');
+                    row.classList.add('fade-restore');
+                }
+            });
+
+            setTimeout(() => {
+                positionChanges.forEach(change => {
+                    const row = tableBody.querySelector(`[data-user-id="${change.userId}"]`);
+                    if (row) row.classList.remove('fade-restore');
+                });
+            }, 1000);
+        }, 1000);
+    }
+
+    updateCurrentUserData(userTournament, leaderboardId) {
+        const userRow = document.getElementById(`leaderboard-table-user-info-${leaderboardId}`);
+        if (!userRow) return;
+    
+        const pointsElement = userRow.querySelector('.leaderboard-row-points');
+        const positionElement = userRow.querySelector('.leaderboard-row-position');
+        const rewardElement = userRow.querySelector('.leaderboard-row-reward');
+    
+        this.animateCounter(pointsElement, parseInt(pointsElement.textContent), userTournament.points);
+        this.animateCounter(positionElement, parseInt(positionElement.textContent), userTournament.position);
+    
+        const leaderboardData = this.leaderboardsData.get(leaderboardId);
+        let isInTop = false;
+    
+        if (leaderboardData && leaderboardData.rewardsData) {
+            console.log("start making make")
+            const maxRewardPositions = leaderboardData.rewardsData.length;
+            
+            if (userTournament.position <= maxRewardPositions) {
+                const rewardIndex = userTournament.position - 1;
+                const rewardAction = leaderboardData.rewardsData[rewardIndex];
+                
+                rewardElement.textContent = this.getTablePrizeText(rewardAction) || '-';
+                rewardElement.className = `leaderboard-row-reward ${this.getTablePrizeClassnames(rewardAction)}`;
+                
+                if (userRow.classList.contains('hide-user-info')) {
+                    userRow.classList.remove('hide-user-info');
+                }
+                isInTop = true;
+            } else {
+                if (!userRow.classList.contains('hide-user-info')) {
+                    userRow.classList.add('hide-user-info');
+                }
+                rewardElement.textContent = '-';
+                rewardElement.className = 'leaderboard-row-reward';
+                isInTop = false;
+            }
+        } else {
+            console.log("not start making make")
+
+            if (!userRow.classList.contains('hide-user-info')) {
+                userRow.classList.add('hide-user-info');
+            }
+            rewardElement.textContent = '-';
+            rewardElement.className = 'leaderboard-row-reward';
+            isInTop = false;
+        }
+    
+        this.userData.set(leaderboardId, {
+            points: userTournament.points,
+            position: userTournament.position,
+            isWinner: isInTop
+        });
+    }
+
+    getLowestPoints(leaderboardId) {
+        const lastIndex = this.leaderboardsData.get(leaderboardId).usersData.length - 1;
+        return this.leaderboardsData.get(leaderboardId).usersData[lastIndex]?.node.points || 0;
+    }
+
+    animateCounter(element, start, end, duration = 500) {
+        if (!element || start === end) return;
+
+        let startTime = null;
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+
+            const value = Math.floor(start + (end - start) * progress);
+            element.textContent = value;
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                element.textContent = end;
+            }
+        };
+
+        requestAnimationFrame(animate);
+    }
+
+    async executeGraphQLQuery(query, variables) {
+        let responseData;
+        while (true) {
+            const response = await fetch(`https://www.ambassadoribet.com/_internal/gql/?_${Date.now()}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query, variables })
+            });
+
+            responseData = await response.json();
+
+            if (!responseData.errors || responseData.errors.length === 0) {
+                break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        return responseData;
+    }
+
+    drawTableHeaderButton(leaderboardId, data) {
+        const dateRange = this.displayDateRange(data.startsAt, data.endsAt);
+
+        const button = document.createElement('button');
+        button.classList.add('leaderboard-header-button');
+        button.id = `leaderboard-button-${leaderboardId}`;
+        button.textContent = dateRange;
+
+        const startDate = new Date(data.startsAt).getTime();
+
+        const buttons = Array.from(this.leaderboardButtonsBox.children);
+
+        let insertBeforeElement = null;
+        for (const btn of buttons) {
+            const btnId = btn.id.replace('leaderboard-button-', '');
+            const btnData = this.leaderboardsData.get(btnId);
+            if (!btnData) continue;
+
+            const btnStartDate = new Date(btnData.startsAt).getTime();
+            if (startDate < btnStartDate) {
+                insertBeforeElement = btn;
+                break;
             }
         }
 
-        drawLeaderboardTableHeader(parentElement) {
-            let headerHTML = `
-                <div class="leaderboard-row-header" id="leaderboard-row-header">
-                    <div class="table-position-header">
-                        ${this.getPossitionText()}
-                    </div>
-                    <div class="table-user-name-header">
-                        ${this.getHeaderUserNameText()}
-                    </div>
-                    <div class="table-points-header">
-                        ${this.getPointsText()}
-                    </div>
-                    <div class="table-prize-header">
-                        ${this.getPrizeText()}
-                    </div>
-                </div>
-            `;
-
-            parentElement.innerHTML += headerHTML;
+        if (insertBeforeElement) {
+            this.leaderboardButtonsBox.insertBefore(button, insertBeforeElement);
+        } else {
+            this.leaderboardButtonsBox.appendChild(button);
         }
 
-        drawLeaderboardTableRow(parentElement, data, index) {
-            let rowHTML = `
-                <div class="leaderboard-row" id="leaderboard-row-${index}">
-                    <div class="table-position" id="table-position-${index}">
-                        ${index}
-                    </div>
-                    <div class="table-user-name" id="table-user-name-${index}">
-                        ${maskUsername(data.userName, this.currentUserId, data.userId)}
-                    </div>
-                    <div class="table-points" id="table-points-${index}">
-                        ${data.points}
-                    </div>
-            `;
+        button.addEventListener('click', () => this.toggleLeaderboardTable(leaderboardId));
+    }
 
-            if (data.userId === this.currentUserId) {
-                this.chickenDinner = { isWinner: true, index: index };
-                rowHTML = rowHTML.replace('<div class="leaderboard-row"', '<div class="leaderboard-row winner-winner-chicken-dinner"');
-            }
+    displayDateRange(startsAt, endsAt) {
+        const options = { day: 'numeric' };
+        const start = new Date(startsAt);
+        const end = new Date(endsAt);
 
-            rowHTML += this.drawPrizeElementHTML(data.prize, index);
+        const monthNames = {
+            'ka': ['იანვ', 'თებ', 'მარტ', 'აპრ', 'მაის', 'ივნ', 'ივლ', 'აგვ', 'სექტ', 'ოქტ', 'ნოემ', 'დეკ'],
+            'tr': ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+            'en': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            'ru': ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+        };
 
-            rowHTML += `</div>`;
+        const locale = this.locale;
 
-            parentElement.innerHTML += rowHTML;
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return 'Incorrect date';
         }
 
-        drawPrizeElementHTML(data, index) {
-            return `
-                <div class="table-prize ${this.getTablePrizeClassnames(data).join(' ')}" id="table-prize-${index}">
-                    ${this.getTablePrizeText(data)}
-                </div>
-            `;
-        }
+        const startMonthIndex = start.getMonth();
+        const endMonthIndex = end.getMonth();
 
+        if (start.toDateString() === end.toDateString()) {
+            return `${start.getDate()} ${monthNames[locale][startMonthIndex]}`;
+        } else {
+            const startDate = start.getDate();
+            const endDate = end.getDate();
 
-        drawLeaderboardTableRows(data) {
-            const entries = data.userTournamentConnection.edges || [];
-            const leaderboardsRows = document.createElement('div');
-            this.leaderboardTableParentElement.appendChild(leaderboardsRows);
-            leaderboardsRows.classList.add('leaderboard-rows');
-            leaderboardsRows.id = `leaderboard-rows`;
-            for (let i = 0; i < Math.min(this.actionsCount, entries.length); i++) {
-                this.drawLeaderboardTableRow(leaderboardsRows, {
-                    userId: entries[i].node.user.userId,
-                    userName: entries[i].node.user.displayName,
-                    position: entries[i].node.position,
-                    points: entries[i].node.points,
-                    prize: data.actions?.[i]?.action
-                }, i + 1);
+            if (startMonthIndex === endMonthIndex) {
+                return `${startDate} – ${endDate} ${monthNames[locale][startMonthIndex]}`;
+            } else {
+                return `${startDate} ${monthNames[locale][startMonthIndex]} – ${endDate} ${monthNames[locale][endMonthIndex]}`;
             }
         }
+    }
 
-        async drawUserInfo(parentElement) {
-            if (this.currentUserId && this.currentUserId !== 'null' && this.currentUserId !== "") {
-                await this.getUserInfo(this.leaderboardId, this.currentUserId);
-
-                let userInfoHTML = `
-                    <div class="leaderboard-row-user-container">
-                        <div class="leaderboard-row-user" id="leaderboard-row-user">
-                            <div class="table-position-user">
-                                ${this.currUserInfo?.position || "-"}
-                            </div>
-                            <div class="table-user-name-user">
-                                ${this.currUserInfo?.user?.nickname || ""}
-                            </div>
-                            <div class="table-points-user">
-                                ${this.currUserInfo?.points || 0}
-                            </div>
-                            <div class="table-prize-user">
-                                -
-                            </div>
+    async drawLeaderboardHeader() {
+        let rowHTML = `
+                    <div class="leaderboard-table-row" id="leaderboard-table-header-row">
+                        <div class="leaderboard-row-position">
+                            ${this.translationMap.position[this.locale]}
+                        </div>
+                        <div class="leaderboard-row-nickname">
+                            ${this.translationMap.users[this.locale]}
+                        </div>
+                        <div class="leaderboard-row-points">
+                            ${this.translationMap.points[this.locale]}
+                        </div>
+                        <div class="leaderboard-row-reward ">
+                            ${this.translationMap.prize[this.locale]}
                         </div>
                     </div>
                 `;
 
-                if (this.chickenDinner.isWinner) {
-                    userInfoHTML = userInfoHTML.replace('<div class="leaderboard-row-user"', '<div class="leaderboard-row-user switch_spot_in"');
-                } else {
-                    userInfoHTML = userInfoHTML.replace('<div class="leaderboard-row-user"', '<div class="leaderboard-row-user switch_spot_out"');
-                }
-
-
-                parentElement.innerHTML += userInfoHTML;
-            }
-        }
-
-
-
-        getTablePrizeClassnames(data) {
-            return [
-                'table-prize',
-                data?.bonus?.reward?.type === 'FREE_SPINS' && 'table-prize-free-spins',
-                data?.bonus?.reward?.type === 'FIXED' && 'table-prize-fixed',
-                data?.title && 'table-prize-title',
-                data?.box?.type === 'LOOT_BOX' && 'table-prize-loot-box',
-                data?.box?.type === 'MYSTERY_BOX' && 'table-prize-mystery-box',
-                data?.box?.type === 'WHEEL_OF_FORTUNE' && 'table-prize-wheel-of-fortune'
-            ].filter(Boolean);
-        }
-
-        getTablePrizeText(data) {
-            if (data === null) return '';
-            if (data?.bonus?.reward?.type === 'FREE_SPINS') {
-                return data?.bonus?.reward?.amount;
-            }
-            if (data?.bonus?.reward?.type === 'FIXED') {
-                return data?.bonus?.reward?.amounts[0]?.value;
-            }
-            if (data?.title) {
-                return ``;
-            }
-            if (data?.box?.type === 'LOOT_BOX') {
-                return data?.box?.description;
-            }
-            if (data?.box?.type === 'MYSTERY_BOX') {
-                return data?.box?.description;
-            }
-            if (data?.box?.type === 'WHEEL_OF_FORTUNE') {
-                return data?.box?.description;
-            }
-            return '';
-        }
-
-
-
-
-        getPossitionText() {
-            switch (this.locale) {
-                case 'en':
-                    return 'Position';
-                case 'ru':
-                    return 'Позиция';
-                case 'ka':
-                    return 'პოზიცია';
-                case 'tr':
-                    return 'Konum';
-            }
-        }
-
-        getPointsText() {
-            switch (this.locale) {
-                case 'en':
-                    return 'Points';
-                case 'ru':
-                    return 'Очки';
-                case 'ka':
-                    return 'ქულები';
-                case 'tr':
-                    return 'Puanlar';
-            }
-        }
-
-        getPrizeText() {
-            switch (this.locale) {
-                case 'en':
-                    return 'Prize';
-                case 'ru':
-                    return 'Приз';
-                case 'ka':
-                    return 'პრიზი';
-                case 'tr':
-                    return 'Ödül';
-            }
-        }
-
-        getHeaderUserNameText() {
-            switch (this.locale) {
-                case 'en':
-                    return 'Users';
-                case 'ru':
-                    return 'Пользователи';
-                case 'ka':
-                    return 'მომხმარებლები';
-                case 'tr':
-                    return 'Kullanıcılar';
-            }
-        }
-
-
+        this.leaderboardBody.innerHTML = rowHTML;
     }
 
-}
+    drawLeaderboardBody(leaderboardInfo, userInfo, leaderboardId) {
+        let bodyHTML = this.leaderboardBody?.innerHTML && '';
+        bodyHTML += `<div class="leaderboard-table" id="leaderboard-table-${leaderboardId}">`;
 
+        bodyHTML += this.drawLeaderboardData(leaderboardInfo, leaderboardId);
+        if (this.currentUserInfo.id !== null && this.currentUserInfo.id !== "" && this.currentUserInfo.id !== undefined) {
+            bodyHTML += this.drawLeaderboardUserInfo(userInfo, leaderboardId);
+        }
+        bodyHTML += `</div>`;
+        this.leaderboardBody.innerHTML += bodyHTML;
+    }
+
+    drawLeaderboardData(data, leaderboardId) {
+        let rowHtML = `<div class="leaderboard-table-row-body" id="leaderboard-table-row-body-${leaderboardId}">`;
+        for (let i = 0; i < Math.max(data.rewardsData.length, data.usersData.length); i++) {
+            const userId = data.usersData[i]?.node.user.userId || '';
+            rowHtML += `
+            <div class="leaderboard-table-row ${this.isCurrentUser(userId, leaderboardId)}" 
+                 id="leaderboard-table-row-body-${i + 1}" 
+                 data-user-id="${userId}">
+                <div class="leaderboard-row-position">
+                    ${data.usersData[i]?.node.position || '-'}
+                </div>
+                <div class="leaderboard-row-nickname">
+                    ${maskUsername(data.usersData[i]?.node.user.displayName || '-', userId, this.currentUserInfo.id)}
+                </div>
+                <div class="leaderboard-row-points">
+                    ${data.usersData[i]?.node.points || '-'}
+                </div>
+                <div class="leaderboard-row-reward ${this.getTablePrizeClassnames(data.rewardsData[i]?.action)}">
+                    ${this.getTablePrizeText(data.rewardsData[i]?.action)}
+                </div>
+            </div>
+        `;
+        }
+        rowHtML += `</div>`;
+
+        return rowHtML;
+    }
+
+    drawLeaderboardUserInfo(data, leaderboardId) {
+        let userRowHTML = `
+                <div class="user-info-container">
+                    <div class="leaderboard-table-user-info ${this.userData.get(leaderboardId)?.isWinner ? "hide-user-info" : ""}" id="leaderboard-table-user-info-${leaderboardId}">
+                        <div class="leaderboard-row-position">
+                            ${data?.position || '-'}
+                        </div>
+                        <div class="leaderboard-row-nickname">
+                            ${this?.currentUserInfo?.nickname}
+                        </div>
+                        <div class="leaderboard-row-points">
+                            ${data?.points || '-'}
+                        </div>
+                        <div class="leaderboard-row-reward ${this.getTablePrizeClassnames(this.leaderboardsData.get(leaderboardId).rewardsData[data?.position - 1]?.action)}">
+                            ${this.getTablePrizeText(this.leaderboardsData.get(leaderboardId).rewardsData[data?.position - 1]?.action) || '-'}
+                        </div>
+                    </div>
+                </div>
+                `;
+
+        return userRowHTML;
+    }
+
+    REWARD_TYPES = {
+        FREE_SPINS: 'FREE_SPINS',
+        FIXED: 'FIXED'
+    };
+
+    BOX_TYPES = {
+        LOOT_BOX: 'LOOT_BOX',
+        MYSTERY_BOX: 'MYSTERY_BOX',
+        WHEEL_OF_FORTUNE: 'WHEEL_OF_FORTUNE'
+    };
+
+    toggleLeaderboardTable(leaderboardId) {
+        const table = document.getElementById(`leaderboard-table-${leaderboardId}`);
+        const button = document.getElementById(`leaderboard-button-${leaderboardId}`);
+
+        Array.from(this.leaderboardBody.children).forEach((child) => {
+            child.classList.remove('active');
+        });
+
+        Array.from(this.leaderboardButtonsBox.children).forEach((child) => {
+            child.classList.remove('active');
+        });
+
+        button.classList.add('active');
+        table.classList.add('active');
+    }
+
+    getTablePrizeClassnames(data) {
+        if (!data) return 'table-prize';
+
+        const classMap = {
+            [`${data?.bonus?.reward?.type === this.REWARD_TYPES.FREE_SPINS}`]: 'table-prize-free-spins',
+            [`${data?.bonus?.reward?.type === this.REWARD_TYPES.FIXED}`]: 'table-prize-fixed',
+            [`${Boolean(data?.title)}`]: data?.title ? data?.title.trim().replace(/ /g, "_") : "",
+            [`${data?.box?.type === this.BOX_TYPES.LOOT_BOX}`]: 'table-prize-loot-box',
+            [`${data?.box?.type === this.BOX_TYPES.MYSTERY_BOX}`]: 'table-prize-mystery-box',
+            [`${data?.box?.type === this.BOX_TYPES.WHEEL_OF_FORTUNE}`]: 'table-prize-wheel-of-fortune'
+        };
+
+        const classes = ['table-prize'];
+
+        Object.entries(classMap).forEach(([condition, className]) => {
+            if (condition === 'true') classes.push(className);
+        });
+
+        return classes.join(' ');
+    }
+
+    getTablePrizeText(data) {
+        if (!data) return '';
+
+        const prizeTextMap = {
+            [`freespins-${Boolean(data?.bonus?.reward?.type === this.REWARD_TYPES.FREE_SPINS)}`]:
+                () => data?.bonus?.reward?.amount + ` <img class="free-spins-icon" src="https://images.takeshape.io/5da2b4d5-59f6-412a-82c3-f6a272b532be/dev/bb35ec84-1583-40a4-9c84-2f0c3948e82b/slot-machine_1f3b0.png" loading="lazy">`,
+                
+
+            [`fixed-${Boolean(data?.bonus?.reward?.type === this.REWARD_TYPES.FIXED)}`]:
+                () => data?.bonus?.reward?.amounts?.[0]?.value + " ₾",
+
+            [`title-${Boolean(data?.title)}`]:
+                () => ``,
+
+            [`lootbox-${Boolean(data?.box?.type === this.BOX_TYPES.LOOT_BOX)}`]:
+                () => data?.box?.description,
+
+            [`mysterybox-${Boolean(data?.box?.type === this.BOX_TYPES.MYSTERY_BOX)}`]:
+                () => data?.box?.description,
+
+            [`wheeloffortune-${Boolean(data?.box?.type === this.BOX_TYPES.WHEEL_OF_FORTUNE)}`]:
+                () => data?.box?.description
+        };
+
+        for (const [key, textFn] of Object.entries(prizeTextMap)) {
+            if (key.endsWith('-true')) {
+                return textFn() || '';
+            }
+        }
+
+        return '';
+    }
+
+    translationMap = {
+        // position: {
+        //     en: 'Position',
+        //     ru: 'Позиция',
+        //     ka: 'პოზიცია',
+        //     tr: 'Konum'
+        // },        
+        position: {
+            en: '#',
+            ru: '#',
+            ka: '#',
+            tr: '#'
+        },
+        points: {
+            en: 'Points',
+            ru: 'Очки',
+            ka: 'ქულები',
+            tr: 'Puanlar'
+        },
+        prize: {
+            en: 'Prize',
+            ru: 'Приз',
+            ka: 'პრიზი',
+            tr: 'Ödül'
+        },
+        users: {
+            en: 'Users',
+            ru: 'Пользователи',
+            ka: 'მომხმარებლები',
+            tr: 'Kullanıcılar'
+        }
+    };
+
+    setLoading(loading) {
+        this.loading = loading;
+        if (!loading) {
+            this.leaderboardTable.style.display = 'block';
+            this.parrentElement.getElementsByClassName('mat-loader')[0].style.display = 'none';
+        }
+    }
+
+    isCurrentUser(userId, leaderboardId) {
+        if (this.currentUserInfo.id === null || this.currentUserInfo.id === "" || this.currentUserInfo.id === undefined) {
+            return "";
+        } else if (userId === null || userId === "" || userId === undefined) {
+            return "";
+        }
+        if (this.currentUserInfo.id === userId) {
+            this.userData.get(leaderboardId).isWinner = true;
+            return "champion";
+        }
+        return "";
+    }
+
+    updateLeaderboards() {
+        const currentDate = new Date();
+        let activeFound = false;
+
+        this.leaderboardsData.forEach((data, index) => {
+            const startEt = new Date(data.startsAt);
+            const endEt = new Date(data.endsAt);
+
+            if (currentDate >= startEt && currentDate <= endEt) {
+                if (!activeFound) {
+                    document.getElementById(`leaderboard-table-${index}`).classList?.add('active');
+                    document.getElementById(`leaderboard-button-${index}`).classList?.add('active');
+                    activeFound = true;
+                }
+            } else if (currentDate < startEt) {
+                document.getElementById(`leaderboard-table-${index}`).classList.add('inactive');
+            }
+        });
+    }
+
+
+    makeElementDraggable(element, options = {}) {
+        if (!element || !(element instanceof HTMLElement)) {
+            console.error('Invalid element provided to makeElementDraggable');
+            return;
+        }
+    
+        const settings = {
+            speedMultiplier: options.speedMultiplier || 1.5,
+            enableTouch: options.enableTouch !== false,
+            dragCursor: options.dragCursor || 'grabbing'
+        };
+    
+        let isDown = false;
+        let startX, startY, scrollLeft, scrollTop;
+        const originalCursor = getComputedStyle(element).cursor || 'auto';
+        
+        if (originalCursor === 'auto' && !element.style.cursor) {
+            element.style.cursor = 'grab';
+        }
+        
+        const addEvent = (type, handler) => {
+            element.addEventListener(type, handler, { passive: false });
+        };
+        
+        addEvent('mousedown', (e) => {
+            isDown = true;
+            element.style.cursor = settings.dragCursor;
+            
+            startX = e.pageX - element.offsetLeft;
+            startY = e.pageY - element.offsetTop;
+            scrollLeft = element.scrollLeft;
+            scrollTop = element.scrollTop;
+            
+            e.preventDefault();
+        });
+        
+        const stopDragging = () => {
+            if (!isDown) return;
+            isDown = false;
+            element.style.cursor = originalCursor || 'grab';
+        };
+        
+        addEvent('mouseleave', stopDragging);
+        addEvent('mouseup', stopDragging);
+        
+        addEvent('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            
+            const x = e.pageX - element.offsetLeft;
+            const y = e.pageY - element.offsetTop;
+            const walkX = (x - startX) * settings.speedMultiplier;
+            const walkY = (y - startY) * settings.speedMultiplier;
+            
+            element.scrollLeft = scrollLeft - walkX;
+            element.scrollTop = scrollTop - walkY;
+        });
+        
+        if (settings.enableTouch) {
+            addEvent('touchstart', (e) => {
+                isDown = true;
+                
+                if (e.touches.length === 1) {
+                    startX = e.touches[0].pageX - element.offsetLeft;
+                    startY = e.touches[0].pageY - element.offsetTop;
+                    scrollLeft = element.scrollLeft;
+                    scrollTop = element.scrollTop;
+                }
+            });
+            
+            addEvent('touchend', stopDragging);
+            addEvent('touchcancel', stopDragging);
+            
+            addEvent('touchmove', (e) => {
+                if (!isDown || e.touches.length !== 1) return;
+                
+                e.preventDefault();
+                
+                const x = e.touches[0].pageX - element.offsetLeft;
+                const y = e.touches[0].pageY - element.offsetTop;
+                const walkX = (x - startX) * settings.speedMultiplier;
+                const walkY = (y - startY) * settings.speedMultiplier;
+                
+                element.scrollLeft = scrollLeft - walkX;
+                element.scrollTop = scrollTop - walkY;
+            });
+        }
+        
+        return {
+            destroy: () => {
+                const events = ['mousedown', 'mouseleave', 'mouseup', 'mousemove'];
+                if (settings.enableTouch) {
+                    events.push('touchstart', 'touchend', 'touchcancel', 'touchmove');
+                }
+                events.forEach(type => {
+                    element.removeEventListener(type, null, { passive: false });
+                });
+                element.style.cursor = originalCursor;
+            }
+        };
+    }
+    
+    
+}
