@@ -96,6 +96,9 @@ async function logCurrentPath(path, previousPath) {
      else if (path.includes("welcomebonus")) {
       wheelInitialize();
     }
+    else if (path.includes("box")) {
+      madeProgressBar();
+    }
 }
 
 addEventListener("load", (event) => {
