@@ -132,3 +132,22 @@ async function showProgressBarMrch() {
   }
 }
 
+    async function madeProgressBar() {
+      const progressBarInfo = JSON.parse(
+        document.getElementById("progressBarData").textContent
+      );
+      const amountProgressMR = await showProgressBarMrch();
+      buildAllProgressBars(progressBarInfo, amountProgressMR);
+      document.getElementById("amodisplay").textContent = `${amountProgressMR} ₾`;
+  
+      const thresholds = [2500, 5000, 15000, 25000];
+      thresholds.forEach((threshold) => {
+        const markers = document.querySelectorAll(`.present-${threshold}`);
+        if (amountProgressMR >= threshold) {
+          markers.forEach((marker) => {
+            marker.classList.add("progress-achieved");
+          });
+        }
+      });
+    }
+
