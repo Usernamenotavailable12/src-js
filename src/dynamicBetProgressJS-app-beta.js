@@ -26,7 +26,10 @@ async function buildAllProgressBars(progressData) {
   
     const getCurrPercent = (points) => {
       breackpoints.forEach(element => {
-        if (points > element.to) { currPercent += 100; }
+        if (points > element.to) {
+        currPercent += 100;
+        document.getElementsByClassName(`present-${element.to}`)[0].classList.add("progress-achieved");
+        }
         else if (points <= element.from) { currPercent += 0; }
         else {
           currPercent += (points - element.from) * 100 / (element.to - element.from);
