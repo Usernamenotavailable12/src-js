@@ -61,7 +61,7 @@ async function buildAllProgressBars(progressData) {
           <div class="logoutText">${progressData.logoutText[lang]}</div>
           <div class="buttonsContainer"> 
             <button class="loginButton" onClick="TMA.execute('LOGIN_CONNECTED')">${loginText[lang]}</button>
-            <button class="registerButton" onClick="TMA.execute('REGISTER')">${loginText[lang]}</button>
+            <button class="registerButton" onClick="TMA.execute('REGISTER')">${registerText[lang]}</button>
           </div>
         </div>
       `
