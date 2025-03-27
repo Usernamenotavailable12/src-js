@@ -44,7 +44,7 @@ async function buildAllProgressBars(progressData) {
     progressBarsParrent.classList.add("progress-bars-parrent");
   
     let loginText = {
-      ka: "ავტორიზაცია",
+      ka: "შესვლა",
       en: "Login",
       ru: "Вход",
       tr: "Giriş"
