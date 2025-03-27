@@ -15,7 +15,7 @@ function calculateTimeInterval() {
 async function buildAllProgressBars(progressData) {
     const progressBar = document.getElementById(progressData.progressBarParrent);
     if (!progressBar) return;
-    const isUserLoginned = extractAuthDataFromCookie().userId == undefined ? false : true;
+    const isUserLoginned = extractAuthDataFromCookie()?.userId == undefined ? false : true;
     let points = null;
     if (isUserLoginned) {
       points = await showProgressBarMrch();
