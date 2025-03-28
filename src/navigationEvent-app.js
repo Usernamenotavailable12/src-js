@@ -49,12 +49,10 @@ function leaderboardInitialize() {
 
   const initializeLeaderboard = async () => {
     const tournamentDataElement = document.getElementById("tournamentData");
-    const tournamentData = tournamentDataElement?.textContent;
+    const tournamentsList = JSON.parse(tournamentDataElement?.textContent);
 
     if (tournamentData) {
       try {
-        const tournamentsList = parseTournamentData(tournamentData);
-
         if (tournamentsList.length > 0) {
           leaderboardTable = new FullLeaderboardTable(
             tournamentsList,
@@ -80,6 +78,7 @@ function leaderboardInitialize() {
 
   initializeLeaderboard();
 }
+
 
 function wheelInitialize() {
   let counter = 0;
