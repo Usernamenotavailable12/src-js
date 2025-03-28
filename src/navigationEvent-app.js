@@ -148,3 +148,11 @@ addEventListener("load", (event) => {
     });
   })(window.history);
 });
+
+window.addEventListener("message", (message) => {
+  if (typeof message.data === "string" && message.data.includes("/auth/redirect/signin_iq")) {
+    setTimeout(() => {
+      logCurrentPath(window.location.pathname, window.location.href);
+    }, 1000);
+  }
+});
