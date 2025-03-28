@@ -27,29 +27,14 @@ function leaderboardInitialize() {
   const retryInterval = 1000;
   let attempts = 0;
 
-  const parseTournamentData = (data) => {
-    if (!data) return [];
-
-    const segments = data.split(",");
-    const tournamentsList = [];
-
-    for (let i = 0; i < segments.length; i += 2) {
-      if (i + 1 < segments.length) {
-        const id = segments[i].trim();
-        const count = parseInt(segments[i + 1].trim(), 10) || 0;
-
-        if (id) {
-          tournamentsList.push({ id, count });
-        }
-      }
-    }
-
-    return tournamentsList;
-  };
-
   const initializeLeaderboard = async () => {
     const tournamentDataElement = document.getElementById("tournamentData");
-    const tournamentsList = JSON.parse(tournamentDataElement?.textContent);
+    if (!tournamentDataElement || tournamentDataElement.textContent === "") {
+      attempts++;
+      setTimeout(initializeLeaderboard, retryInterval);
+    }
+    const tournamentData = tournamentDataElement?.textContent || {};
+    const tournamentsList = JSON.parse(tournamentData);
 
     if (tournamentData) {
       try {
@@ -78,7 +63,6 @@ function leaderboardInitialize() {
 
   initializeLeaderboard();
 }
-
 
 function wheelInitialize() {
   let counter = 0;
