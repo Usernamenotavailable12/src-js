@@ -27,38 +27,46 @@ function leaderboardInitialize() {
   const retryInterval = 1000;
   let attempts = 0;
 
-  const initializeLeaderboard = async () => {
-    const tournamentDataElement = document.getElementById("tournamentData");
-    if (!tournamentDataElement || tournamentDataElement.textContent === "") {
-      attempts++;
-      setTimeout(initializeLeaderboard, retryInterval);
-    }
-    const tournamentData = tournamentDataElement?.textContent || {};
-    const tournamentsList = JSON.parse(tournamentData);
+  const initializeLeaderboard = () => {
+      const tournamentDataElement = document.getElementById("tournamentData");
+      
+      if (!tournamentDataElement || !tournamentDataElement.textContent) {
+          attempts++;
+          if (attempts < maxAttempts) {
+              return setTimeout(initializeLeaderboard, retryInterval);
+          } else {
+              console.error("Maximum attempts reached waiting for tournament data element.");
+              return;
+          }
+      }
 
-    if (tournamentData) {
+      let tournamentsList;
       try {
-        if (tournamentsList.length > 0) {
-          leaderboardTable = new FullLeaderboardTable(
-            tournamentsList,
-            document.getElementById("leaderboardLoader")
-          );
-        } else {
-          console.warn("No valid tournament data found");
-        }
+          tournamentsList = JSON.parse(tournamentDataElement.textContent);
       } catch (error) {
-        console.error("Failed to initialize leaderboard:", error);
+          console.error("Failed to parse tournament data:", error);
+          return;
       }
-    } else {
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(initializeLeaderboard, retryInterval);
+
+      if (tournamentsList?.ldArray?.length > 0) {
+          try {
+              leaderboardTable = new FullLeaderboardTable(
+                  tournamentsList,
+                  document.getElementById("leaderboardLoader")
+              );
+          } catch (error) {
+              attempts++;
+              console.error("Failed to initialize leaderboard:", error);
+              if (attempts < maxAttempts) {
+                  return setTimeout(initializeLeaderboard, retryInterval);
+              } else {
+                  console.error("Maximum attempts reached waiting for tournament data element.");
+                  return;
+              }
+          }
       } else {
-        console.error(
-          "Maximum attempts reached waiting for tournament data element."
-        );
+          console.warn("No valid tournament data found");
       }
-    }
   };
 
   initializeLeaderboard();
