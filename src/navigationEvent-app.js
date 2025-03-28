@@ -48,7 +48,7 @@ function leaderboardInitialize() {
           return;
       }
 
-      if (tournamentsList?.ldArray?.length > 0) {
+      if (tournamentsList?.length > 0) {
           try {
               leaderboardTable = new FullLeaderboardTable(
                   tournamentsList,
