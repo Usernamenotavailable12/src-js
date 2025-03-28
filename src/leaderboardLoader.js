@@ -703,15 +703,11 @@ constructor(leaderboardsInfo, parrentElement) {
 
     drawTableHeaderButton(leaderboardId, data) {
         const dateRange = this.displayDateRange(data.startsAt, data.endsAt);
-        const leaderboardInfo = this.leaderboardsInfo.find(item => item.id === leaderboardId);
+
         const button = document.createElement('button');
         button.classList.add('leaderboard-header-button');
         button.id = `leaderboard-button-${leaderboardId}`;
-        if(leaderboardInfo?.buttonText){
-            button.textContent = leaderboardInfo.buttonText;
-        }else{
-            button.textContent = dateRange;
-        }
+        button.textContent = dateRange;
 
         const startDate = new Date(data.startsAt).getTime();
 
