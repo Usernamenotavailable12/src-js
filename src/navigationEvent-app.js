@@ -100,11 +100,11 @@ async function logCurrentPath(path, previousPath) {
   // INIT
   if (path.includes("leaderboard")) {
     leaderboardInitialize();
-  } else if (path.includes("wheel")) {
+  } if (path.includes("wheel")) {
     wheelInitialize();
-  } else if (path.includes("welcomebonus")) {
+  } if (path.includes("welcomebonus")) {
     wheelInitialize();
-  } else if (path.includes("box")) {
+  } if (path.includes("box")) {
     tryMadeProgressBar();
   }
 }
