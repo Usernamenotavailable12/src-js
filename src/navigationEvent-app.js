@@ -23,9 +23,9 @@ async function tryMadeProgressBar() {
 
 
 function leaderboardInitialize() {
-  const maxAttempts = 10;
-  const retryInterval = 1000;
-  let attempts = 0;
+  const maxAttempts = 10;  
+  const retryInterval = 1000; 
+  let attempts = 0; 
 
   const initializeLeaderboard = () => {
       const tournamentDataElement = document.getElementById("tournamentData");
@@ -48,7 +48,7 @@ function leaderboardInitialize() {
           return;
       }
 
-      if (tournamentsList?.length > 0) {
+      if (tournamentsList != null) {
           try {
               leaderboardTable = new FullLeaderboardTable(
                   tournamentsList,
