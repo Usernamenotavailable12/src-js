@@ -13,6 +13,7 @@ class FullLeaderboardTable {
     leaderboardsData = new Map();
     userData = new Map();
     leaderboardTableWebSocket = null;
+    outComponent = null;
     loading = true;
     spinner = null;
     currentUserInfo = {
@@ -22,7 +23,8 @@ class FullLeaderboardTable {
     locale = 'en';
 
 constructor(leaderboardsInfo, parrentElement) {
-        this.leaderboardsInfo = leaderboardsInfo;
+        this.leaderboardsInfo = leaderboardsInfo?.ldArray;
+        this.outComponent = leaderboardsInfo.outComponent;
         this.parrentElement = parrentElement;
         this.currentUserInfo.id = extractAuthDataFromCookie()?.userId;
         this.locale = document.documentElement.getAttribute('lang') || 'en';
@@ -471,7 +473,7 @@ constructor(leaderboardsInfo, parrentElement) {
         if (nicknameElement && pointsElement && positionElement) {
             positionElement.textContent = userItem.position;
             nicknameElement.textContent = maskUsername(userItem.user.displayName, userItem.user.userId, currentUserId);
-            pointsElement.textContent = userItem.points;
+            pointsElement.textContent = this.getPointsText(userItem.points);
             rowElement.classList.toggle('champion', userItem.user.userId === currentUserId);
         }
     }
@@ -555,12 +557,20 @@ constructor(leaderboardsInfo, parrentElement) {
     handlePointsUpdate(tableBody, usersData, userId, oldPoints, newPoints) {
         const rowElement = tableBody.querySelector(`[data-user-id="${userId}"]`);
         if (!rowElement) return;
-
+    
         const pointsElement = rowElement.querySelector('.leaderboard-row-points');
         if (pointsElement) {
-            this.animateCounter(pointsElement, oldPoints, newPoints);
+            const startValue = parseFloat(this.getPointsText(oldPoints).replace(/[^0-9.-]+/g, ''));
+            const endValue = parseFloat(this.getPointsText(newPoints).replace(/[^0-9.-]+/g, ''));
+            
+            if (!isNaN(startValue) && !isNaN(endValue)) {
+                this.animateCounter(pointsElement, startValue, endValue, 1000);
+            } else {
+                console.error('Invalid points values:', { oldPoints, newPoints, startValue, endValue });
+                pointsElement.textContent = this.getPointsText(newPoints);
+            }
         }
-
+    
         const userIndex = usersData.findIndex(item => item.node.user.userId === userId);
         if (userIndex !== -1) {
             this.updateRow(rowElement, usersData[userIndex].node, this.currentUserInfo?.id);
@@ -607,14 +617,13 @@ constructor(leaderboardsInfo, parrentElement) {
         const positionElement = userRow.querySelector('.leaderboard-row-position');
         const rewardElement = userRow.querySelector('.leaderboard-row-reward');
     
-        this.animateCounter(pointsElement, parseInt(pointsElement.textContent), userTournament.points);
+        this.animateCounter(pointsElement, parseInt(this.getPointsText(pointsElement.textContent)), this.getPointsText(userTournament.points));
         this.animateCounter(positionElement, parseInt(positionElement.textContent), userTournament.position);
     
         const leaderboardData = this.leaderboardsData.get(leaderboardId);
         let isInTop = false;
     
         if (leaderboardData && leaderboardData.rewardsData) {
-            console.log("start making make")
             const maxRewardPositions = leaderboardData.rewardsData.length;
             
             if (userTournament.position <= maxRewardPositions) {
@@ -637,7 +646,6 @@ constructor(leaderboardsInfo, parrentElement) {
                 isInTop = false;
             }
         } else {
-            console.log("not start making make")
 
             if (!userRow.classList.contains('hide-user-info')) {
                 userRow.classList.add('hide-user-info');
@@ -655,30 +663,49 @@ constructor(leaderboardsInfo, parrentElement) {
     }
 
     getLowestPoints(leaderboardId) {
-        const lastIndex = this.leaderboardsData.get(leaderboardId).usersData.length - 1;
+        const lastIndex = this.leaderboardsData.get(leaderboardId)?.usersData?.length - 1;
         return this.leaderboardsData.get(leaderboardId).usersData[lastIndex]?.node.points || 0;
     }
 
     animateCounter(element, start, end, duration = 500) {
-        if (!element || start === end) return;
-
-        let startTime = null;
-        const animate = (timestamp) => {
-            if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / duration, 1);
-
-            const value = Math.floor(start + (end - start) * progress);
-            element.textContent = value;
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                element.textContent = end;
+        console.log('Animate counter called with:', { element, start, end, duration });
+    
+        if (!(element instanceof Element)) {
+            console.error('Error: First argument must be a DOM element');
+            return;
+        }
+    
+        const parsedStart = Number(start);
+        const parsedEnd = Number(end);
+        const parsedDuration = Number(duration);
+    
+        if (isNaN(parsedStart) || isNaN(parsedEnd) || parsedDuration <= 0) {
+            console.error('Error: Invalid parameters:', { start, end, duration });
+            element.textContent = this.getPointsText(end);
+            return;
+        }
+    
+        const range = parsedEnd - parsedStart;
+        const stepTime = 16;
+        const steps = Math.floor(parsedDuration / stepTime);
+        const stepValue = range / steps;
+        let currentValue = parsedStart;
+        let stepCount = 0;
+    
+        const interval = setInterval(() => {
+            stepCount++;
+            currentValue = parsedStart + (stepValue * stepCount);
+            const displayValue = Math.round(currentValue);
+            element.textContent = this.getPointsText(displayValue);
+    
+            if (stepCount >= steps) {
+                clearInterval(interval);
+                element.textContent = this.getPointsText(parsedEnd);
+                console.log('Animation completed');
             }
-        };
-
-        requestAnimationFrame(animate);
+        }, stepTime);
     }
+
 
     async executeGraphQLQuery(query, variables) {
         let responseData;
@@ -702,18 +729,18 @@ constructor(leaderboardsInfo, parrentElement) {
     }
 
     drawTableHeaderButton(leaderboardId, data) {
-        const dateRange = this.displayDateRange(data.startsAt, data.endsAt);
+        const dateRange = this.displayDateRange(data?.startsAt, data?.endsAt);
         const leaderboardInfo = this.leaderboardsInfo.find(item => item.id === leaderboardId);
         const button = document.createElement('button');
         button.classList.add('leaderboard-header-button');
         button.id = `leaderboard-button-${leaderboardId}`;
         if(leaderboardInfo?.buttonText){
-            button.textContent = leaderboardInfo.buttonText;
+            button.innerHTML = leaderboardInfo?.buttonText;
         }else{
             button.textContent = dateRange;
         }
 
-        const startDate = new Date(data.startsAt).getTime();
+        const startDate = new Date(data?.startsAt).getTime();
 
         const buttons = Array.from(this.leaderboardButtonsBox.children);
 
@@ -723,7 +750,7 @@ constructor(leaderboardsInfo, parrentElement) {
             const btnData = this.leaderboardsData.get(btnId);
             if (!btnData) continue;
 
-            const btnStartDate = new Date(btnData.startsAt).getTime();
+            const btnStartDate = new Date(btnData?.startsAt).getTime();
             if (startDate < btnStartDate) {
                 insertBeforeElement = btn;
                 break;
@@ -745,7 +772,7 @@ constructor(leaderboardsInfo, parrentElement) {
         const end = new Date(endsAt);
 
         const monthNames = {
-            'ka': ['იანვ', 'თებ', 'მარტ', 'აპრ', 'მაის', 'ივნ', 'ივლ', 'აგვ', 'სექტ', 'ოქტ', 'ნოემ', 'დეკ'],
+            'ka': ['იან', 'თებ', 'მარ', 'აპრ', 'მაი', 'ივნ', 'ივლ', 'აგვ', 'სექ', 'ოქტ', 'ნოე', 'დეკ'],
             'tr': ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
             'en': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             'ru': ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
@@ -807,6 +834,27 @@ constructor(leaderboardsInfo, parrentElement) {
         this.leaderboardBody.innerHTML += bodyHTML;
     }
 
+    getPointsText(points) {
+        if (points === null || points === undefined) return '-';
+        if (points === 0) return '0';
+        
+        let numStr = typeof points === 'string' ? points : points.toString();
+        
+        let parts = numStr.split('.');
+        let integerPart = parts[0];
+        
+        let formattedInteger = '';
+        for (let i = integerPart.length - 1, count = 0; i >= 0; i--) {
+            formattedInteger = integerPart[i] + formattedInteger;
+            count++;
+            if (count % 3 === 0 && i > 0) {
+                formattedInteger = ' ' + formattedInteger;
+            }
+        }
+        
+        return formattedInteger;
+    }
+
     drawLeaderboardData(data, leaderboardId) {
         let rowHtML = `<div class="leaderboard-table-row-body" id="leaderboard-table-row-body-${leaderboardId}">`;
         for (let i = 0; i < Math.max(data.rewardsData.length, data.usersData.length); i++) {
@@ -822,7 +870,7 @@ constructor(leaderboardsInfo, parrentElement) {
                     ${maskUsername(data.usersData[i]?.node.user.displayName || '-', userId, this.currentUserInfo.id)}
                 </div>
                 <div class="leaderboard-row-points">
-                    ${data.usersData[i]?.node.points || '-'}
+                    ${data.usersData[i]?.node.points ? this.getPointsText(data.usersData[i]?.node.points) : '-'}
                 </div>
                 <div class="leaderboard-row-reward ${this.getTablePrizeClassnames(data.rewardsData[i]?.action)}">
                     ${this.getTablePrizeText(data.rewardsData[i]?.action)}
@@ -846,7 +894,7 @@ constructor(leaderboardsInfo, parrentElement) {
                             ${this?.currentUserInfo?.nickname}
                         </div>
                         <div class="leaderboard-row-points">
-                            ${data?.points || '-'}
+                            ${this.getPointsText(data?.points) || '-'}
                         </div>
                         <div class="leaderboard-row-reward ${this.getTablePrizeClassnames(this.leaderboardsData.get(leaderboardId).rewardsData[data?.position - 1]?.action)}">
                             ${this.getTablePrizeText(this.leaderboardsData.get(leaderboardId).rewardsData[data?.position - 1]?.action) || '-'}
@@ -872,17 +920,42 @@ constructor(leaderboardsInfo, parrentElement) {
     toggleLeaderboardTable(leaderboardId) {
         const table = document.getElementById(`leaderboard-table-${leaderboardId}`);
         const button = document.getElementById(`leaderboard-button-${leaderboardId}`);
-
+        const parentBox = this.leaderboardButtonsBox;
+    
+        if (!table || !button || !parentBox) {
+            console.error('Missing elements:', { table, button, parentBox });
+            return;
+        }
+    
+        if(document.getElementById("inactiveComponentlBABBAOO")){
+            document.getElementById("inactiveComponentlBABBAOO").remove();
+            document.getElementById("leaderboard-table-header-row").style.display = "";
+        }
+    
         Array.from(this.leaderboardBody.children).forEach((child) => {
             child.classList.remove('active');
         });
-
-        Array.from(this.leaderboardButtonsBox.children).forEach((child) => {
+    
+        Array.from(parentBox.children).forEach((child) => {
             child.classList.remove('active');
         });
-
+    
         button.classList.add('active');
         table.classList.add('active');
+    
+        button.classList.add('active');
+        table.classList.add('active');
+    
+        parentBox.style.overflowX = 'auto';
+        
+        const buttonRect = button.getBoundingClientRect();
+        const parentRect = parentBox.getBoundingClientRect();
+        const newScrollLeft = button.offsetLeft - (parentRect.width - buttonRect.width) / 2;
+    
+        parentBox.scrollTo({
+            left: newScrollLeft,
+            behavior: 'smooth'
+        });
     }
 
     getTablePrizeClassnames(data) {
@@ -921,13 +994,13 @@ constructor(leaderboardsInfo, parrentElement) {
                 () => ``,
 
             [`lootbox-${Boolean(data?.box?.type === this.BOX_TYPES.LOOT_BOX)}`]:
-                () => data?.box?.description,
+                () => "",
 
             [`mysterybox-${Boolean(data?.box?.type === this.BOX_TYPES.MYSTERY_BOX)}`]:
-                () => data?.box?.description,
+                () => "",
 
             [`wheeloffortune-${Boolean(data?.box?.type === this.BOX_TYPES.WHEEL_OF_FORTUNE)}`]:
-                () => data?.box?.description
+                () => ""
         };
 
         for (const [key, textFn] of Object.entries(prizeTextMap)) {
@@ -992,25 +1065,45 @@ constructor(leaderboardsInfo, parrentElement) {
         }
         return "";
     }
-
     updateLeaderboards() {
         const currentDate = new Date();
         let activeFound = false;
-
+        let latestEndDate = null;
+        let latestIndex = -1;
+    
         this.leaderboardsData.forEach((data, index) => {
             const startEt = new Date(data.startsAt);
             const endEt = new Date(data.endsAt);
-
+    
             if (currentDate >= startEt && currentDate <= endEt) {
                 if (!activeFound) {
                     document.getElementById(`leaderboard-table-${index}`).classList?.add('active');
                     document.getElementById(`leaderboard-button-${index}`).classList?.add('active');
                     activeFound = true;
                 }
-            } else if (currentDate < startEt) {
+            } else {
                 document.getElementById(`leaderboard-table-${index}`).classList.add('inactive');
+                if (!latestEndDate || endEt > latestEndDate) {
+                    latestEndDate = endEt;
+                    latestIndex = index;
+                }
             }
         });
+    
+        console.log(this.leaderboardsData, activeFound);
+        
+        if (!activeFound) {
+            if (latestIndex !== -1) {
+                document.getElementById(`leaderboard-table-${latestIndex}`).classList.add('active');
+                document.getElementById(`leaderboard-button-${latestIndex}`).classList.add('active');
+            } else {
+                const inactive = document.createElement('div');
+                inactive.id = "inactiveComponentlBABBAOO";
+                inactive.innerHTML = this.outComponent[this.locale];
+                document.getElementById("leaderboard-table-header-row").style.display = "none";
+                this.leaderboardBody.appendChild(inactive);
+            }
+        }
     }
 
 
@@ -1114,7 +1207,5 @@ constructor(leaderboardsInfo, parrentElement) {
                 element.style.cursor = originalCursor;
             }
         };
-    }
-    
-    
+    }  
 }
