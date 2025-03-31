@@ -1062,155 +1062,161 @@ function maskUsername(username, currentUserId, userId) {
         return "";
     }
     updateLeaderboards() {
-      const currentDate = new Date();
-      let activeFound = false;
-      let latestEndDate = null;
-      let latestIndex = -1;
-      let activeButton = null;
-  
-      this.leaderboardsData.forEach((data, index) => {
-          const startEt = new Date(data.startsAt);
-          const endEt = new Date(data.endsAt);
-      
-          if (currentDate >= startEt && currentDate <= endEt) {
-              if (!activeFound) {
-                  document.getElementById(`leaderboard-table-${index}`).classList?.add('active');
-                  const buttonElement = document.getElementById(`leaderboard-button-${index}`);
-                  buttonElement.classList?.add('active');
-                  activeFound = true;
-                  activeButton = buttonElement;
-              }
-          } else {
-              document.getElementById(`leaderboard-table-${index}`).classList.add('inactive');
-              if (!latestEndDate || endEt > latestEndDate) {
-                  latestEndDate = endEt;
-                  latestIndex = index;
-              }
-          }
-      });
-  
-      if (!activeFound && latestIndex !== -1) {
-          document.getElementById(`leaderboard-table-${latestIndex}`).classList.add('active');
-          const buttonElement = document.getElementById(`leaderboard-button-${latestIndex}`);
-          buttonElement.classList.add('active');
-          activeButton = buttonElement;
-      }
-  
-      if (activeButton && this.leaderboardButtonsBox) {
-          const buttonLeft = activeButton.offsetLeft;
-          const buttonWidth = activeButton.offsetWidth;
-          const containerWidth = this.leaderboardButtonsBox.offsetWidth;
-          
-          const scrollPosition = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
-          
-          this.leaderboardButtonsBox.scrollTo({
-              left: scrollPosition,
-              behavior: 'smooth'
-          });
-      } else if (!activeButton) {
-          const inactive = document.createElement('div');
-          inactive.id = "inactiveComponentlBABBAOO";
-          inactive.innerHTML = this.outComponent[this.locale];
-          document.getElementById("leaderboard-table-header-row").style.display = "none";
-          this.leaderboardBody.appendChild(inactive);
-      }
-  }
-  
-  
-  makeElementDraggable(element, options = {}) {
-    if (!element || !(element instanceof HTMLElement)) {
-        console.error('Invalid element provided to makeElementDraggable');
-        return;
-    }
+        const currentDate = new Date();
+        let activeFound = false;
+        let latestEndDate = null;
+        let latestIndex = -1;
+        let activeButton = null;
 
-    const settings = {
-        speedMultiplier: options.speedMultiplier || 1.5,
-        enableTouch: options.enableTouch !== false,
-        dragCursor: options.dragCursor || 'grabbing'
-    };
-
-    let isDown = false;
-    let startX, startY, scrollLeft, scrollTop;
-    const originalCursor = getComputedStyle(element).cursor || 'auto';
-
-    if (originalCursor === 'auto' && !element.style.cursor) {
-        element.style.cursor = 'grab';
-    }
-
-    element.style.touchAction = 'none';
-
-    const addEvent = (type, handler) => {
-        element.addEventListener(type, handler, { passive: false });
-    };
-
-    addEvent('mousedown', (e) => {
-        isDown = true;
-        element.style.cursor = settings.dragCursor;
-        startX = e.pageX - element.offsetLeft;
-        startY = e.pageY - element.offsetTop;
-        scrollLeft = element.scrollLeft;
-        scrollTop = element.scrollTop;
-        e.preventDefault();
-    });
-
-    const stopDragging = () => {
-        if (!isDown) return;
-        isDown = false;
-        element.style.cursor = originalCursor || 'grab';
-    };
-
-    addEvent('mouseleave', stopDragging);
-    addEvent('mouseup', stopDragging);
-
-    addEvent('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - element.offsetLeft;
-        const y = e.pageY - element.offsetTop;
-        const walkX = (x - startX) * settings.speedMultiplier;
-        const walkY = (y - startY) * settings.speedMultiplier;
-        element.scrollLeft = scrollLeft - walkX;
-        element.scrollTop = scrollTop - walkY;
-    });
-
-    if (settings.enableTouch) {
-        addEvent('touchstart', (e) => {
-            if (e.touches.length !== 1) return;
-            isDown = true;
-            startX = e.touches[0].pageX - element.offsetLeft;
-            startY = e.touches[0].pageY - element.offsetTop;
-            scrollLeft = element.scrollLeft;
-            scrollTop = element.scrollTop;
-            e.preventDefault();
+        this.leaderboardsData.forEach((data, index) => {
+            const startEt = new Date(data.startsAt);
+            const endEt = new Date(data.endsAt);
+        
+            if (currentDate >= startEt && currentDate <= endEt) {
+                if (!activeFound) {
+                    document.getElementById(`leaderboard-table-${index}`).classList?.add('active');
+                    const buttonElement = document.getElementById(`leaderboard-button-${index}`);
+                    buttonElement.classList?.add('active');
+                    activeFound = true;
+                    activeButton = buttonElement;
+                }
+            } else {
+                document.getElementById(`leaderboard-table-${index}`).classList.add('inactive');
+                if (!latestEndDate || endEt > latestEndDate) {
+                    latestEndDate = endEt;
+                    latestIndex = index;
+                }
+            }
         });
 
-        addEvent('touchend', stopDragging);
-        addEvent('touchcancel', stopDragging);
+        if (!activeFound && latestEndDate < currentDate) {
+            document.getElementById(`leaderboard-table-${latestIndex}`).classList.add('active');
+            const buttonElement = document.getElementById(`leaderboard-button-${latestIndex}`);
+            buttonElement.classList.add('active');
+            activeButton = buttonElement;
+        }
 
-        addEvent('touchmove', (e) => {
-            if (!isDown || e.touches.length !== 1) return;
+        if (activeButton && this.leaderboardButtonsBox) {
+            const buttonLeft = activeButton.offsetLeft;
+            const buttonWidth = activeButton.offsetWidth;
+            const containerWidth = this.leaderboardButtonsBox.offsetWidth;
+            
+            const scrollPosition = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
+            
+            this.leaderboardButtonsBox.scrollTo({
+                left: scrollPosition,
+                behavior: 'smooth'
+            });
+        } else if (!activeButton) {
+            const inactive = document.createElement('div');
+            inactive.id = "inactiveComponentlBABBAOO";
+            inactive.innerHTML = this.outComponent[this.locale];
+            document.getElementById("leaderboard-table-header-row").style.display = "none";
+            this.leaderboardBody.appendChild(inactive);
+        }
+    }
+
+
+    makeElementDraggable(element, options = {}) {
+        if (!element || !(element instanceof HTMLElement)) {
+            console.error('Invalid element provided to makeElementDraggable');
+            return;
+        }
+    
+        const settings = {
+            speedMultiplier: options.speedMultiplier || 1.5,
+            enableTouch: options.enableTouch !== false,
+            dragCursor: options.dragCursor || 'grabbing'
+        };
+    
+        let isDown = false;
+        let startX, startY, scrollLeft, scrollTop;
+        let dragRect;
+        const originalCursor = getComputedStyle(element).cursor || 'auto';
+        
+        if (originalCursor === 'auto' && !element.style.cursor) {
+            element.style.cursor = 'grab';
+        }
+        
+        const addEvent = (type, handler) => {
+            element.addEventListener(type, handler, { passive: false });
+        };
+        
+        addEvent('mousedown', (e) => {
+            isDown = true;
+            element.style.cursor = settings.dragCursor;
+            
+            dragRect = element.getBoundingClientRect();
+            startX = e.clientX - dragRect.left;
+            startY = e.clientY - dragRect.top;
+            scrollLeft = element.scrollLeft;
+            scrollTop = element.scrollTop;
+            
             e.preventDefault();
-            const x = e.touches[0].pageX - element.offsetLeft;
-            const y = e.touches[0].pageY - element.offsetTop;
+        });
+        
+        const stopDragging = () => {
+            if (!isDown) return;
+            isDown = false;
+            element.style.cursor = originalCursor || 'grab';
+        };
+        
+        addEvent('mouseleave', stopDragging);
+        addEvent('mouseup', stopDragging);
+        
+        addEvent('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            
+            const x = e.clientX - dragRect.left;
+            const y = e.clientY - dragRect.top;
             const walkX = (x - startX) * settings.speedMultiplier;
             const walkY = (y - startY) * settings.speedMultiplier;
+            
             element.scrollLeft = scrollLeft - walkX;
             element.scrollTop = scrollTop - walkY;
         });
-    }
-
-    return {
-        destroy: () => {
-            const events = ['mousedown', 'mouseleave', 'mouseup', 'mousemove'];
-            if (settings.enableTouch) {
-                events.push('touchstart', 'touchend', 'touchcancel', 'touchmove');
-            }
-            events.forEach(type => {
-                element.removeEventListener(type, null, { passive: false });
+        
+        if (settings.enableTouch) {
+            addEvent('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDown = true;
+                    dragRect = element.getBoundingClientRect();
+                    startX = e.touches[0].clientX - dragRect.left;
+                    startY = e.touches[0].clientY - dragRect.top;
+                    scrollLeft = element.scrollLeft;
+                    scrollTop = element.scrollTop;
+                }
             });
-            element.style.cursor = originalCursor;
-            element.style.touchAction = '';
+            
+            addEvent('touchend', stopDragging);
+            addEvent('touchcancel', stopDragging);
+            
+            addEvent('touchmove', (e) => {
+                if (!isDown || e.touches.length !== 1) return;
+                e.preventDefault();
+                
+                const x = e.touches[0].clientX - dragRect.left;
+                const y = e.touches[0].clientY - dragRect.top;
+                const walkX = (x - startX) * settings.speedMultiplier;
+                const walkY = (y - startY) * settings.speedMultiplier;
+                
+                element.scrollLeft = scrollLeft - walkX;
+                element.scrollTop = scrollTop - walkY;
+            });
         }
-    };
+        
+        return {
+            destroy: () => {
+                const events = ['mousedown', 'mouseleave', 'mouseup', 'mousemove'];
+                if (settings.enableTouch) {
+                    events.push('touchstart', 'touchend', 'touchcancel', 'touchmove');
+                }
+                events.forEach(type => {
+                    element.removeEventListener(type, null, { passive: false });
+                });
+                element.style.cursor = originalCursor;
+            }
+        };
+    }
 }
-  }
