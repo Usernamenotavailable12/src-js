@@ -1131,86 +1131,90 @@ constructor(leaderboardsInfo, parrentElement) {
     
         let isDown = false;
         let startX, startY, scrollLeft, scrollTop;
+        let dragRect;
         const originalCursor = getComputedStyle(element).cursor || 'auto';
-    
+        
         if (originalCursor === 'auto' && !element.style.cursor) {
             element.style.cursor = 'grab';
         }
-    
-        const eventListeners = new Map();
-    
+        
         const addEvent = (type, handler) => {
             element.addEventListener(type, handler, { passive: false });
-            eventListeners.set(type, handler);
         };
-    
-        const startDragging = (x, y) => {
+        
+        addEvent('mousedown', (e) => {
             isDown = true;
             element.style.cursor = settings.dragCursor;
-            const rect = element.getBoundingClientRect();
-            startX = x - rect.left;
-            startY = y - rect.top;
+            
+            dragRect = element.getBoundingClientRect();
+            startX = e.clientX - dragRect.left;
+            startY = e.clientY - dragRect.top;
             scrollLeft = element.scrollLeft;
             scrollTop = element.scrollTop;
-        };
-    
+            
+            e.preventDefault();
+        });
+        
         const stopDragging = () => {
+            if (!isDown) return;
             isDown = false;
             element.style.cursor = originalCursor || 'grab';
         };
-    
-        addEvent('mousedown', (e) => {
-            startDragging(e.clientX, e.clientY);
-            e.preventDefault();
-        });
-    
+        
         addEvent('mouseleave', stopDragging);
         addEvent('mouseup', stopDragging);
-    
+        
         addEvent('mousemove', (e) => {
             if (!isDown) return;
             e.preventDefault();
-            const rect = element.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            
+            const x = e.clientX - dragRect.left;
+            const y = e.clientY - dragRect.top;
             const walkX = (x - startX) * settings.speedMultiplier;
             const walkY = (y - startY) * settings.speedMultiplier;
-    
+            
             element.scrollLeft = scrollLeft - walkX;
             element.scrollTop = scrollTop - walkY;
         });
-    
+        
         if (settings.enableTouch) {
             addEvent('touchstart', (e) => {
                 if (e.touches.length === 1) {
-                    startDragging(e.touches[0].clientX, e.touches[0].clientY);
-                    e.preventDefault();
+                    isDown = true;
+                    dragRect = element.getBoundingClientRect();
+                    startX = e.touches[0].clientX - dragRect.left;
+                    startY = e.touches[0].clientY - dragRect.top;
+                    scrollLeft = element.scrollLeft;
+                    scrollTop = element.scrollTop;
                 }
             });
-    
+            
             addEvent('touchend', stopDragging);
             addEvent('touchcancel', stopDragging);
-    
+            
             addEvent('touchmove', (e) => {
                 if (!isDown || e.touches.length !== 1) return;
                 e.preventDefault();
-                const rect = element.getBoundingClientRect();
-                const x = e.touches[0].clientX - rect.left;
-                const y = e.touches[0].clientY - rect.top;
+                
+                const x = e.touches[0].clientX - dragRect.left;
+                const y = e.touches[0].clientY - dragRect.top;
                 const walkX = (x - startX) * settings.speedMultiplier;
                 const walkY = (y - startY) * settings.speedMultiplier;
-    
+                
                 element.scrollLeft = scrollLeft - walkX;
                 element.scrollTop = scrollTop - walkY;
             });
         }
-    
+        
         return {
             destroy: () => {
-                eventListeners.forEach((handler, type) => {
-                    element.removeEventListener(type, handler, { passive: false });
+                const events = ['mousedown', 'mouseleave', 'mouseup', 'mousemove'];
+                if (settings.enableTouch) {
+                    events.push('touchstart', 'touchend', 'touchcancel', 'touchmove');
+                }
+                events.forEach(type => {
+                    element.removeEventListener(type, null, { passive: false });
                 });
-                eventListeners.clear();
                 element.style.cursor = originalCursor;
             }
         };
