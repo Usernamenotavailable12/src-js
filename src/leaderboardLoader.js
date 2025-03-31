@@ -668,7 +668,7 @@ constructor(leaderboardsInfo, parrentElement) {
     }
 
     animateCounter(element, start, end, duration = 500) {
-        console.log('Animate counter called with:', { element, start, end, duration });
+
     
         if (!(element instanceof Element)) {
             console.error('Error: First argument must be a DOM element');
@@ -701,7 +701,6 @@ constructor(leaderboardsInfo, parrentElement) {
             if (stepCount >= steps) {
                 clearInterval(interval);
                 element.textContent = this.getPointsText(parsedEnd);
-                console.log('Animation completed');
             }
         }, stepTime);
     }
@@ -1090,7 +1089,6 @@ constructor(leaderboardsInfo, parrentElement) {
             }
         });
     
-        console.log(this.leaderboardsData, activeFound);
         
         if (!activeFound) {
             if (latestIndex !== -1) {
