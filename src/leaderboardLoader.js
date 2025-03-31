@@ -942,14 +942,14 @@ constructor(leaderboardsInfo, parrentElement) {
     
         parentBox.style.overflowX = 'auto';
         
-        const buttonRect = button.getBoundingClientRect();
-        const parentRect = parentBox.getBoundingClientRect();
-        const newScrollLeft = button.offsetLeft - (parentRect.width - buttonRect.width) / 2;
+        // const buttonRect = button.getBoundingClientRect();
+        // const parentRect = parentBox.getBoundingClientRect();
+        // const newScrollLeft = button.offsetLeft - (parentRect.width - buttonRect.width) / 2;
     
-        parentBox.scrollTo({
-            left: newScrollLeft,
-            behavior: 'smooth'
-        });
+        // parentBox.scrollTo({
+        //     left: newScrollLeft,
+        //     behavior: 'smooth'
+        // });
     }
 
     getTablePrizeClassnames(data) {
