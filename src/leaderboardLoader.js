@@ -39,9 +39,6 @@ constructor(leaderboardsInfo, parrentElement) {
 
         const leaderboardHTML = `
         <style>
-        .active{
-        display: block !important;
-        }
         mat-spinner {
             background-size: contain !important;
             background-repeat: no-repeat !important;
@@ -926,8 +923,8 @@ constructor(leaderboardsInfo, parrentElement) {
             return;
         }
     
-        if(document.getElementById("inactiveComponentlBABBAOO")){
-            document.getElementById("inactiveComponentlBABBAOO").remove();
+        if(document.getElementById("inComponentlBABBAOO")){
+            document.getElementById("inComponentlBABBAOO").remove();
             document.getElementById("leaderboard-table-header-row").style.display = "";
         }
     
