@@ -2,9 +2,9 @@ function maskUsername(username, currentUserId, userId) {
     if (!username || username.length <= 2) return username;
     if (userId && userId === currentUserId) return username;
     return username[0] + '*****' + username[username.length - 1];
-  }
-  
-  class FullLeaderboardTable {
+}
+
+class FullLeaderboardTable {
     leaderboardsInfo = [];
     parrentElement = null;
     leaderboardButtonsBox = null;
@@ -21,22 +21,22 @@ function maskUsername(username, currentUserId, userId) {
         nickname: null
     }
     locale = 'en';
-  
-  constructor(leaderboardsInfo, parrentElement) {
+
+constructor(leaderboardsInfo, parrentElement) {
         this.leaderboardsInfo = leaderboardsInfo?.ldArray;
         this.outComponent = leaderboardsInfo.outComponent;
         this.parrentElement = parrentElement;
         this.currentUserInfo.id = extractAuthDataFromCookie()?.userId;
         this.locale = document.documentElement.getAttribute('lang') || 'en';
         this.getAllData();
-  
-  
+
+
         const loaderHTML = `
                 <mat-spinner class="mat-loader" style="display: inline-block;">
                     <div class=" loader">   
                     </mat-spinner> 
                     `;
-  
+
         const leaderboardHTML = `
         <style>
         mat-spinner {
@@ -47,7 +47,7 @@ function maskUsername(username, currentUserId, userId) {
             #leaderboardLoader{
     position: relative;
     min-height: 200px;
-  }
+}
         .mat-loader {
             display: none;
             position: absolute;
@@ -65,7 +65,7 @@ function maskUsername(username, currentUserId, userId) {
                 l20-1 1.2s infinite linear alternate,
                 l20-2 2.4s infinite linear;
             }
-  
+
             @keyframes l20-1 {
             0%    {clip-path: polygon(50% 50%, 0 0, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%);}
             12.5% {clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 0%, 100% 0%, 100% 0%);}
@@ -75,20 +75,20 @@ function maskUsername(username, currentUserId, userId) {
             75%   {clip-path: polygon(50% 50%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 50% 100%, 0% 100%);}
             100%  {clip-path: polygon(50% 50%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 0% 100%);}
             }
-  
+
             @keyframes l20-2 { 
             0%    {transform: scaleY(1) rotate(0deg);}
             49.99% {transform: scaleY(1) rotate(135deg);}
             50%   {transform: scaleY(-1) rotate(0deg);}
             100%  {transform: scaleY(-1) rotate(-135deg);}
             }
-  
+
             .leaderboard-table-row {
                 opacity: 1;
                 transition: opacity 0.3s ease;
             }
-  
-  
+
+
         </style>
                     <div class="leaderboard-table-main" style="display:none;">
                         <div class="leaderboard-header">
@@ -97,7 +97,7 @@ function maskUsername(username, currentUserId, userId) {
                         </div>
                         <div class="leaderboard-body"></div>
                 `;
-  
+
         this.parrentElement.innerHTML = leaderboardHTML;
         this.parrentElement.innerHTML += loaderHTML;
         this.parrentElement.innerHTML += `</div>`;
@@ -105,39 +105,39 @@ function maskUsername(username, currentUserId, userId) {
         this.leaderboardButtonsBox = this.parrentElement.querySelector('.leaderboard-buttons-box');
         this.leaderboardHeader = this.parrentElement.querySelector('.leaderboard-header');
         this.leaderboardBody = this.parrentElement.querySelector('.leaderboard-body');
-  
+
         const leftButton = document.createElement('button');
         leftButton.innerHTML = `<?xml version="1.0" encoding="iso-8859-1"?>
-  <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-  <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
      viewBox="0 0 330 330" xml:space="preserve" style="transform: scaleX(-1);">
-  <path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001
+<path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001
     c-5.857,5.858-5.857,15.355,0.001,21.213l139.393,139.39L79.393,304.394c-5.857,5.858-5.857,15.355,0.001,21.213
     C82.322,328.536,86.161,330,90,330s7.678-1.464,10.607-4.394l149.999-150.004c2.814-2.813,4.394-6.628,4.394-10.606
     C255,161.018,253.42,157.202,250.606,154.389z"/>
-  </svg>`;
+</svg>`;
         leftButton.classList.add('leaderboard-header-left-scroll-button');
         leftButton.classList.add('leaderboard-header-scroll-button');
         leftButton.addEventListener('click', () => this.scrollButtonsLeft());
         
         const rightButton = document.createElement('button');
         rightButton.innerHTML = `<?xml version="1.0" encoding="iso-8859-1"?>
-  <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-  <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-   viewBox="0 0 330 330" xml:space="preserve">
-  <path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001
-  c-5.857,5.858-5.857,15.355,0.001,21.213l139.393,139.39L79.393,304.394c-5.857,5.858-5.857,15.355,0.001,21.213
-  C82.322,328.536,86.161,330,90,330s7.678-1.464,10.607-4.394l149.999-150.004c2.814-2.813,4.394-6.628,4.394-10.606
-  C255,161.018,253.42,157.202,250.606,154.389z"/>
-  </svg>`;
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 330 330" xml:space="preserve">
+<path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001
+	c-5.857,5.858-5.857,15.355,0.001,21.213l139.393,139.39L79.393,304.394c-5.857,5.858-5.857,15.355,0.001,21.213
+	C82.322,328.536,86.161,330,90,330s7.678-1.464,10.607-4.394l149.999-150.004c2.814-2.813,4.394-6.628,4.394-10.606
+	C255,161.018,253.42,157.202,250.606,154.389z"/>
+</svg>`;
         rightButton.classList.add('leaderboard-header-right-scroll-button');
         rightButton.classList.add('leaderboard-header-scroll-button');
         rightButton.addEventListener('click', () => this.scrollButtonsRight());
-  
+
         this.leaderboardHeader.appendChild(leftButton);
         this.leaderboardHeader.appendChild(this.leaderboardButtonsBox);
         this.leaderboardHeader.appendChild(rightButton);
-  
+
         this.drawLeaderboardHeader();
     }
     destroy() {
@@ -145,31 +145,31 @@ function maskUsername(username, currentUserId, userId) {
         this.parrentElement.removeChild(this.parrentElement.querySelector(".leaderboard-table-main"));
         this.leaderboardTableWebSocket = null;
     }
-  
+
     async getAllData() {
         try {
             let DateNow = Date.now();
-  
+
             if (this.currentUserInfo.id) {
                 this.getUserNickname(this.currentUserInfo.id);
             }
-  
+
             for (const leaderboardInfo of this.leaderboardsInfo) {
                 const lbPromise = this.getTournamentData(leaderboardInfo.id, leaderboardInfo.count, DateNow);
                 const uPromise = this.currentUserInfo.id
                     ? this.getUserData(leaderboardInfo.id, this.currentUserInfo.id, DateNow)
                     : Promise.resolve(null);
-  
+
                 const [lbInfo, uInfo] = await Promise.all([lbPromise, uPromise]);
-  
+
                 this.drawTableHeaderButton(leaderboardInfo.id, lbInfo);
                 this.drawLeaderboardBody(lbInfo, uInfo, leaderboardInfo.id);
             }
-  
+
             if (this.leaderboardsInfo.length <= 1) {
                 this.leaderboardHeader.style.display = "none";
             }
-  
+
         } catch (error) {
             console.error("Error in getAllData:", error);
         } finally {
@@ -181,23 +181,23 @@ function maskUsername(username, currentUserId, userId) {
                 enableTouch: true,
                 dragCursor: 'grabbing'
             });
-  
-  
+
+
             const ele = document.getElementsByClassName("leaderboard-buttons-box")[0];
-  
+
             const hasVerticalScroll = (element) => {
                 return element.scrollWidth > element.clientWidth;
             };
-  
+
             if (!hasVerticalScroll(ele)) {
                 Array.from(document.getElementsByClassName("leaderboard-header-scroll-button")).forEach((btn) => {
                     btn.style.display = "none";
                 });
             }
-  
+
         }
     }
-  
+
     scrollButtonsRight() {
         if (!this.leaderboardButtonsBox) return;
         
@@ -232,7 +232,7 @@ function maskUsername(username, currentUserId, userId) {
         });
     }
     
-  
+
     async getTournamentData(leaderboardId, actionsCount, DateNow) {
         try {
             const query = `
@@ -294,7 +294,7 @@ function maskUsername(username, currentUserId, userId) {
                     }
                 }
             `;
-  
+
             const variables = {
                 tournamentId: leaderboardId,
                 status: ["ACTIVE", "FINISHED", "PREPARING"],
@@ -302,31 +302,31 @@ function maskUsername(username, currentUserId, userId) {
                 first: actionsCount,
                 _nonce: DateNow
             };
-  
+
             const data = await this.executeGraphQLQuery(query, variables);
             const tournamentNode = data?.data?.tournamentConnection?.edges?.[0]?.node;
-  
+
             if (!tournamentNode) {
                 console.warn("Tournament data is missing for leaderboardId:", leaderboardId);
                 return null;
             }
-  
+
             const result = {
                 usersData: tournamentNode.userTournamentConnection.edges,
                 rewardsData: tournamentNode.actions,
                 endsAt: tournamentNode.endsAt,
                 startsAt: tournamentNode.startsAt
             };
-  
+
             this.leaderboardsData.set(leaderboardId, result);
             return result;
-  
+
         } catch (error) {
             console.error("Error fetching tournament data:", error);
             return null;
         }
     }
-  
+
     async getUserData(leaderboardId, userId, DateNow) {
         try {
             const query = `
@@ -341,45 +341,45 @@ function maskUsername(username, currentUserId, userId) {
                     }
                 }
             `;
-  
+
             const variables = {
                 tournamentId: leaderboardId,
                 userId,
                 _nonce: DateNow
             };
-  
+
             const data = await this.executeGraphQLQuery(query, variables);
             const userNode = data?.data?.userTournamentConnection?.edges?.[0]?.node;
-  
+
             if (!userNode) {
                 console.warn("User data is missing for userId:", userId, "in leaderboard:", leaderboardId);
                 return null;
             }
-  
+
             const result = {
                 points: userNode.points,
                 position: userNode.position,
                 isWinner: null
             };
-  
+
             this.userData.set(leaderboardId, result);
             return result;
-  
+
         } catch (error) {
             console.error("Error fetching user data:", error);
             return null;
         }
     }
-  
+
     async getUserNickname(userId) {
         const query = `query User($userId: ID!) {
             user(userId: $userId) {
                 nickname
             }
         }`;
-  
+
         const variables = { userId };
-  
+
         try {
             const data = await this.executeGraphQLQuery(query, variables);
             this.currentUserInfo.nickname = data?.data?.user?.nickname;
@@ -387,16 +387,16 @@ function maskUsername(username, currentUserId, userId) {
             console.error("Error fetching user nickname:", error);
         }
     }
-  
+
     async createWebSocket() {
         const socket = new WebSocket('wss://www.ambassadoribet.com/_internal/ws/default/default/');
         this.leaderboardTableWebSocket = socket;
-  
+
         const messageHandlers = {
             connection_ack: () => this.sendSubscriptions(),
             data: (data) => this.handleSubscriptionData(data)
         };
-  
+
         socket.addEventListener('open', () => {
             socket.send(JSON.stringify({
                 type: 'connection_init',
@@ -408,17 +408,17 @@ function maskUsername(username, currentUserId, userId) {
             const handler = messageHandlers[data.type];
             if (handler) handler(data);
         });
-  
+
         socket.addEventListener('error', (error) => {
             console.error('WebSocket error:', error);
         });
     }
-  
+
     async sendSubscriptions() {
         const subscriptions = this.leaderboardsInfo.map((leaderboard) => ({
             tournamentId: leaderboard.id
         }));
-  
+
         subscriptions.forEach(sub => {
             this.leaderboardTableWebSocket.send(JSON.stringify({
                 id: sub.tournamentId,
@@ -442,18 +442,18 @@ function maskUsername(username, currentUserId, userId) {
             }));
         });
     }
-  
-  
+
+
     async handleSubscriptionData(data) {
         const userTournament = data.payload?.data?.userTournamentUpdatedEx?.userTournament;
         if (userTournament) {
             await this.updateTableData(userTournament, data.id);
         }
     }
-  
+
     updateTableData(userTournament, leaderboardId) {
         const shouldUpdateTable = userTournament.points >= this.getLowestPoints(leaderboardId);
-  
+
         if (shouldUpdateTable) {
             this.updateTableBody(userTournament, leaderboardId);
         }
@@ -461,12 +461,12 @@ function maskUsername(username, currentUserId, userId) {
             this.updateCurrentUserData(userTournament, leaderboardId);
         }
     }
-  
+
     updateRow(rowElement, userItem, currentUserId) {
         const nicknameElement = rowElement.querySelector('.leaderboard-row-nickname');
         const pointsElement = rowElement.querySelector('.leaderboard-row-points');
         const positionElement = rowElement.querySelector('.leaderboard-row-position');
-  
+
         if (nicknameElement && pointsElement && positionElement) {
             positionElement.textContent = userItem.position;
             nicknameElement.textContent = maskUsername(userItem.user.displayName, userItem.user.userId, currentUserId);
@@ -474,7 +474,7 @@ function maskUsername(username, currentUserId, userId) {
             rowElement.classList.toggle('champion', userItem.user.userId === currentUserId);
         }
     }
-  
+
     getMaxCount(leaderboardId) {
         for (const leaderboardInfo of this.leaderboardsInfo) {
             if (leaderboardInfo.id === leaderboardId) {
@@ -483,24 +483,24 @@ function maskUsername(username, currentUserId, userId) {
         }
         return Infinity;
     }
-  
+
     updateTableBody(userTournament, leaderboardId) {
         const leaderboardData = this.leaderboardsData.get(leaderboardId);
         if (!leaderboardData || !leaderboardData.usersData) return;
-  
+
         const tableBody = document.getElementById(`leaderboard-table-row-body-${leaderboardId}`);
         if (!tableBody) return;
-  
+
         const maxCount = this.getMaxCount(leaderboardId);
         const currentCount = Math.min(tableBody.children.length, maxCount);
-  
+
         let userIndex = leaderboardData.usersData.findIndex(
             item => item.node.user.userId === userTournament.userId
         );
-  
+
         const previousPositions = this.getCurrentPositions(tableBody);
         const oldPoints = userIndex !== -1 ? leaderboardData.usersData[userIndex].node.points : null;
-  
+
         if (userIndex !== -1) {
             leaderboardData.usersData[userIndex].node.points = userTournament.points;
         } else if (leaderboardData.usersData.length < maxCount ||
@@ -513,20 +513,20 @@ function maskUsername(username, currentUserId, userId) {
                 }
             });
         }
-  
+
         leaderboardData.usersData.sort((a, b) => b.node.points - a.node.points);
         leaderboardData.usersData.forEach((item, idx) => item.node.position = idx + 1);
         leaderboardData.usersData = leaderboardData.usersData.slice(0, maxCount);
-  
+
         const positionChanges = this.detectPositionChanges(previousPositions, leaderboardData.usersData);
-  
+
         if (positionChanges.length > 0) {
             this.handlePositionChanges(tableBody, leaderboardData.usersData, positionChanges);
         } else if (oldPoints !== null && oldPoints !== userTournament.points) {
             this.handlePointsUpdate(tableBody, leaderboardData.usersData, userTournament.userId, oldPoints, userTournament.points);
         }
     }
-  
+
     getCurrentPositions(tableBody) {
         const positions = {};
         tableBody.querySelectorAll('.leaderboard-table-row').forEach(row => {
@@ -538,7 +538,7 @@ function maskUsername(username, currentUserId, userId) {
         });
         return positions;
     }
-  
+
     detectPositionChanges(previousPositions, usersData) {
         const changes = [];
         usersData.forEach(item => {
@@ -550,7 +550,7 @@ function maskUsername(username, currentUserId, userId) {
         });
         return changes;
     }
-  
+
     handlePointsUpdate(tableBody, usersData, userId, oldPoints, newPoints) {
         const rowElement = tableBody.querySelector(`[data-user-id="${userId}"]`);
         if (!rowElement) return;
@@ -573,13 +573,13 @@ function maskUsername(username, currentUserId, userId) {
             this.updateRow(rowElement, usersData[userIndex].node, this.currentUserInfo?.id);
         }
     }
-  
+
     handlePositionChanges(tableBody, usersData, positionChanges) {
         positionChanges.forEach(change => {
             const row = tableBody.querySelector(`[data-user-id="${change.userId}"]`);
             if (row) row.classList.add('fade');
         });
-  
+
         setTimeout(() => {
             usersData.forEach((item, index) => {
                 let rowElement = tableBody.querySelector(`#leaderboard-table-row-body-${index + 1}`);
@@ -588,7 +588,7 @@ function maskUsername(username, currentUserId, userId) {
                     this.updateRow(rowElement, item.node, this.currentUserInfo?.id);
                 }
             });
-  
+
             positionChanges.forEach(change => {
                 const row = tableBody.querySelector(`[data-user-id="${change.userId}"]`);
                 if (row) {
@@ -596,7 +596,7 @@ function maskUsername(username, currentUserId, userId) {
                     row.classList.add('fade-restore');
                 }
             });
-  
+
             setTimeout(() => {
                 positionChanges.forEach(change => {
                     const row = tableBody.querySelector(`[data-user-id="${change.userId}"]`);
@@ -605,7 +605,7 @@ function maskUsername(username, currentUserId, userId) {
             }, 1000);
         }, 1000);
     }
-  
+
     updateCurrentUserData(userTournament, leaderboardId) {
         const userRow = document.getElementById(`leaderboard-table-user-info-${leaderboardId}`);
         if (!userRow) return;
@@ -643,7 +643,7 @@ function maskUsername(username, currentUserId, userId) {
                 isInTop = false;
             }
         } else {
-  
+
             if (!userRow.classList.contains('hide-user-info')) {
                 userRow.classList.add('hide-user-info');
             }
@@ -658,15 +658,13 @@ function maskUsername(username, currentUserId, userId) {
             isWinner: isInTop
         });
     }
-  
+
     getLowestPoints(leaderboardId) {
         const lastIndex = this.leaderboardsData.get(leaderboardId)?.usersData?.length - 1;
         return this.leaderboardsData.get(leaderboardId).usersData[lastIndex]?.node.points || 0;
     }
-  
+
     animateCounter(element, start, end, duration = 500) {
-  
-    
         if (!(element instanceof Element)) {
             console.error('Error: First argument must be a DOM element');
             return;
@@ -701,8 +699,8 @@ function maskUsername(username, currentUserId, userId) {
             }
         }, stepTime);
     }
-  
-  
+
+
     async executeGraphQLQuery(query, variables) {
         let responseData;
         while (true) {
@@ -711,19 +709,19 @@ function maskUsername(username, currentUserId, userId) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query, variables })
             });
-  
+
             responseData = await response.json();
-  
+
             if (!responseData.errors || responseData.errors.length === 0) {
                 break;
             }
-  
+
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
-  
+
         return responseData;
     }
-  
+
     drawTableHeaderButton(leaderboardId, data) {
         const dateRange = this.displayDateRange(data?.startsAt, data?.endsAt);
         const leaderboardInfo = this.leaderboardsInfo.find(item => item.id === leaderboardId);
@@ -735,60 +733,60 @@ function maskUsername(username, currentUserId, userId) {
         }else{
             button.textContent = dateRange;
         }
-  
+
         const startDate = new Date(data?.startsAt).getTime();
-  
+
         const buttons = Array.from(this.leaderboardButtonsBox.children);
-  
+
         let insertBeforeElement = null;
         for (const btn of buttons) {
             const btnId = btn.id.replace('leaderboard-button-', '');
             const btnData = this.leaderboardsData.get(btnId);
             if (!btnData) continue;
-  
+
             const btnStartDate = new Date(btnData?.startsAt).getTime();
             if (startDate < btnStartDate) {
                 insertBeforeElement = btn;
                 break;
             }
         }
-  
+
         if (insertBeforeElement) {
             this.leaderboardButtonsBox.insertBefore(button, insertBeforeElement);
         } else {
             this.leaderboardButtonsBox.appendChild(button);
         }
-  
+
         button.addEventListener('click', () => this.toggleLeaderboardTable(leaderboardId));
     }
-  
+
     displayDateRange(startsAt, endsAt) {
         const options = { day: 'numeric' };
         const start = new Date(startsAt);
         const end = new Date(endsAt);
-  
+
         const monthNames = {
             'ka': ['იან', 'თებ', 'მარ', 'აპრ', 'მაი', 'ივნ', 'ივლ', 'აგვ', 'სექ', 'ოქტ', 'ნოე', 'დეკ'],
             'tr': ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
             'en': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             'ru': ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
         };
-  
+
         const locale = this.locale;
-  
+
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
             return 'Incorrect date';
         }
-  
+
         const startMonthIndex = start.getMonth();
         const endMonthIndex = end.getMonth();
-  
+
         if (start.toDateString() === end.toDateString()) {
             return `${start.getDate()} ${monthNames[locale][startMonthIndex]}`;
         } else {
             const startDate = start.getDate();
             const endDate = end.getDate();
-  
+
             if (startMonthIndex === endMonthIndex) {
                 return `${startDate} – ${endDate} ${monthNames[locale][startMonthIndex]}`;
             } else {
@@ -796,7 +794,7 @@ function maskUsername(username, currentUserId, userId) {
             }
         }
     }
-  
+
     async drawLeaderboardHeader() {
         let rowHTML = `
                     <div class="leaderboard-table-row" id="leaderboard-table-header-row">
@@ -814,14 +812,14 @@ function maskUsername(username, currentUserId, userId) {
                         </div>
                     </div>
                 `;
-  
+
         this.leaderboardBody.innerHTML = rowHTML;
     }
-  
+
     drawLeaderboardBody(leaderboardInfo, userInfo, leaderboardId) {
         let bodyHTML = this.leaderboardBody?.innerHTML && '';
         bodyHTML += `<div class="leaderboard-table" id="leaderboard-table-${leaderboardId}">`;
-  
+
         bodyHTML += this.drawLeaderboardData(leaderboardInfo, leaderboardId);
         if (this.currentUserInfo.id !== null && this.currentUserInfo.id !== "" && this.currentUserInfo.id !== undefined) {
             bodyHTML += this.drawLeaderboardUserInfo(userInfo, leaderboardId);
@@ -829,7 +827,7 @@ function maskUsername(username, currentUserId, userId) {
         bodyHTML += `</div>`;
         this.leaderboardBody.innerHTML += bodyHTML;
     }
-  
+
     getPointsText(points) {
         if (points === null || points === undefined) return '-';
         if (points === 0) return '0';
@@ -850,7 +848,7 @@ function maskUsername(username, currentUserId, userId) {
         
         return formattedInteger;
     }
-  
+
     drawLeaderboardData(data, leaderboardId) {
         let rowHtML = `<div class="leaderboard-table-row-body" id="leaderboard-table-row-body-${leaderboardId}">`;
         for (let i = 0; i < Math.max(data.rewardsData.length, data.usersData.length); i++) {
@@ -875,10 +873,10 @@ function maskUsername(username, currentUserId, userId) {
         `;
         }
         rowHtML += `</div>`;
-  
+
         return rowHtML;
     }
-  
+
     drawLeaderboardUserInfo(data, leaderboardId) {
         let userRowHTML = `
                 <div class="user-info-container">
@@ -898,21 +896,21 @@ function maskUsername(username, currentUserId, userId) {
                     </div>
                 </div>
                 `;
-  
+
         return userRowHTML;
     }
-  
+
     REWARD_TYPES = {
         FREE_SPINS: 'FREE_SPINS',
         FIXED: 'FIXED'
     };
-  
+
     BOX_TYPES = {
         LOOT_BOX: 'LOOT_BOX',
         MYSTERY_BOX: 'MYSTERY_BOX',
         WHEEL_OF_FORTUNE: 'WHEEL_OF_FORTUNE'
     };
-  
+
     toggleLeaderboardTable(leaderboardId) {
         const table = document.getElementById(`leaderboard-table-${leaderboardId}`);
         const button = document.getElementById(`leaderboard-button-${leaderboardId}`);
@@ -923,8 +921,8 @@ function maskUsername(username, currentUserId, userId) {
             return;
         }
     
-        if(document.getElementById("inComponentlBABBAOO")){
-            document.getElementById("inComponentlBABBAOO").remove();
+        if(document.getElementById("inactiveComponentlBABBAOO")){
+            document.getElementById("inactiveComponentlBABBAOO").remove();
             document.getElementById("leaderboard-table-header-row").style.display = "";
         }
     
@@ -953,10 +951,10 @@ function maskUsername(username, currentUserId, userId) {
             behavior: 'smooth'
         });
     }
-  
+
     getTablePrizeClassnames(data) {
         if (!data) return 'table-prize';
-  
+
         const classMap = {
             [`${data?.bonus?.reward?.type === this.REWARD_TYPES.FREE_SPINS}`]: 'table-prize-free-spins',
             [`${data?.bonus?.reward?.type === this.REWARD_TYPES.FIXED}`]: 'table-prize-fixed',
@@ -965,49 +963,49 @@ function maskUsername(username, currentUserId, userId) {
             [`${data?.box?.type === this.BOX_TYPES.MYSTERY_BOX}`]: 'table-prize-mystery-box',
             [`${data?.box?.type === this.BOX_TYPES.WHEEL_OF_FORTUNE}`]: 'table-prize-wheel-of-fortune'
         };
-  
+
         const classes = ['table-prize'];
-  
+
         Object.entries(classMap).forEach(([condition, className]) => {
             if (condition === 'true') classes.push(className);
         });
-  
+
         return classes.join(' ');
     }
-  
+
     getTablePrizeText(data) {
         if (!data) return '';
-  
+
         const prizeTextMap = {
             [`freespins-${Boolean(data?.bonus?.reward?.type === this.REWARD_TYPES.FREE_SPINS)}`]:
                 () => data?.bonus?.reward?.amount + ` <img class="free-spins-icon" src="https://images.takeshape.io/5da2b4d5-59f6-412a-82c3-f6a272b532be/dev/bb35ec84-1583-40a4-9c84-2f0c3948e82b/slot-machine_1f3b0.png" loading="lazy">`,
                 
-  
+
             [`fixed-${Boolean(data?.bonus?.reward?.type === this.REWARD_TYPES.FIXED)}`]:
                 () => data?.bonus?.reward?.amounts?.[0]?.value + " ₾",
-  
+
             [`title-${Boolean(data?.title)}`]:
                 () => ``,
-  
+
             [`lootbox-${Boolean(data?.box?.type === this.BOX_TYPES.LOOT_BOX)}`]:
                 () => "",
-  
+
             [`mysterybox-${Boolean(data?.box?.type === this.BOX_TYPES.MYSTERY_BOX)}`]:
                 () => "",
-  
+
             [`wheeloffortune-${Boolean(data?.box?.type === this.BOX_TYPES.WHEEL_OF_FORTUNE)}`]:
                 () => ""
         };
-  
+
         for (const [key, textFn] of Object.entries(prizeTextMap)) {
             if (key.endsWith('-true')) {
                 return textFn() || '';
             }
         }
-  
+
         return '';
     }
-  
+
     translationMap = {
         // position: {
         //     en: 'Position',
@@ -1040,7 +1038,7 @@ function maskUsername(username, currentUserId, userId) {
             tr: 'Kullanıcılar'
         }
     };
-  
+
     setLoading(loading) {
         this.loading = loading;
         if (!loading) {
@@ -1048,7 +1046,7 @@ function maskUsername(username, currentUserId, userId) {
             this.parrentElement.getElementsByClassName('mat-loader')[0].style.display = 'none';
         }
     }
-  
+
     isCurrentUser(userId, leaderboardId) {
         if (this.currentUserInfo.id === null || this.currentUserInfo.id === "" || this.currentUserInfo.id === undefined) {
             return "";
@@ -1061,6 +1059,8 @@ function maskUsername(username, currentUserId, userId) {
         }
         return "";
     }
+
+
     updateLeaderboards() {
         const currentDate = new Date();
         let activeFound = false;
@@ -1131,92 +1131,90 @@ function maskUsername(username, currentUserId, userId) {
     
         let isDown = false;
         let startX, startY, scrollLeft, scrollTop;
-        let dragRect;
         const originalCursor = getComputedStyle(element).cursor || 'auto';
-        
+    
         if (originalCursor === 'auto' && !element.style.cursor) {
             element.style.cursor = 'grab';
         }
-        
+    
+        const eventListeners = new Map();
+    
         const addEvent = (type, handler) => {
             element.addEventListener(type, handler, { passive: false });
+            eventListeners.set(type, handler);
         };
-        
-        addEvent('mousedown', (e) => {
+    
+        const startDragging = (x, y) => {
             isDown = true;
             element.style.cursor = settings.dragCursor;
-            
-            dragRect = element.getBoundingClientRect();
-            startX = e.clientX - dragRect.left;
-            startY = e.clientY - dragRect.top;
+            const rect = element.getBoundingClientRect();
+            startX = x - rect.left;
+            startY = y - rect.top;
             scrollLeft = element.scrollLeft;
             scrollTop = element.scrollTop;
-            
-            e.preventDefault();
-        });
-        
+        };
+    
         const stopDragging = () => {
-            if (!isDown) return;
             isDown = false;
             element.style.cursor = originalCursor || 'grab';
         };
-        
+    
+        addEvent('mousedown', (e) => {
+            startDragging(e.clientX, e.clientY);
+            e.preventDefault();
+        });
+    
         addEvent('mouseleave', stopDragging);
         addEvent('mouseup', stopDragging);
-        
+    
         addEvent('mousemove', (e) => {
             if (!isDown) return;
             e.preventDefault();
-            
-            const x = e.clientX - dragRect.left;
-            const y = e.clientY - dragRect.top;
+            const rect = element.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
             const walkX = (x - startX) * settings.speedMultiplier;
             const walkY = (y - startY) * settings.speedMultiplier;
-            
+    
             element.scrollLeft = scrollLeft - walkX;
             element.scrollTop = scrollTop - walkY;
         });
-        
+    
         if (settings.enableTouch) {
             addEvent('touchstart', (e) => {
                 if (e.touches.length === 1) {
-                    isDown = true;
-                    dragRect = element.getBoundingClientRect();
-                    startX = e.touches[0].clientX - dragRect.left;
-                    startY = e.touches[0].clientY - dragRect.top;
-                    scrollLeft = element.scrollLeft;
-                    scrollTop = element.scrollTop;
+                    startDragging(e.touches[0].clientX, e.touches[0].clientY);
+                    e.preventDefault();
                 }
             });
-            
+    
             addEvent('touchend', stopDragging);
             addEvent('touchcancel', stopDragging);
-            
+    
             addEvent('touchmove', (e) => {
                 if (!isDown || e.touches.length !== 1) return;
                 e.preventDefault();
-                
-                const x = e.touches[0].clientX - dragRect.left;
-                const y = e.touches[0].clientY - dragRect.top;
+                const rect = element.getBoundingClientRect();
+                const x = e.touches[0].clientX - rect.left;
+                const y = e.touches[0].clientY - rect.top;
                 const walkX = (x - startX) * settings.speedMultiplier;
                 const walkY = (y - startY) * settings.speedMultiplier;
-                
+    
                 element.scrollLeft = scrollLeft - walkX;
                 element.scrollTop = scrollTop - walkY;
             });
         }
-        
+    
         return {
             destroy: () => {
-                const events = ['mousedown', 'mouseleave', 'mouseup', 'mousemove'];
-                if (settings.enableTouch) {
-                    events.push('touchstart', 'touchend', 'touchcancel', 'touchmove');
-                }
-                events.forEach(type => {
-                    element.removeEventListener(type, null, { passive: false });
+                eventListeners.forEach((handler, type) => {
+                    element.removeEventListener(type, handler, { passive: false });
                 });
+                eventListeners.clear();
                 element.style.cursor = originalCursor;
             }
         };
     }
+    
+    
 }
