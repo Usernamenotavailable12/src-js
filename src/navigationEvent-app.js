@@ -74,8 +74,8 @@ function leaderboardInitialize() {
 
 function wheelInitialize() {
   let counter = 0;
-  let timeoutTime = 200;
-  let maxTryes = 5;
+  let timeoutTime = 500;
+  let maxTryes = 10;
   const drawWheel = (data) => {
     try {
       selectFortuneWheel(data[0], 1);
