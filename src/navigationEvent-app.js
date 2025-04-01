@@ -76,17 +76,18 @@ function wheelInitialize() {
   let counter = 0;
   let timeoutTime = 500;
   let maxTryes = 10;
-  const drawWheel = (data) => {
-    try {
-      selectFortuneWheel(data[0], 1);
-    } catch (e) {
+  const drawWheel = (data) => { 
+    const wheelElement = document.getElementById("wheel");
+    if (!wheelElement) {
       if (counter < maxTryes) {
         counter++;
         setTimeout(() => {
-          drawWheel(data); 
+          drawWheel(data);
         }, timeoutTime);
       }
+      return;
     }
+    selectFortuneWheel(data[0], 1); 
   };
   fetchWheelData().then((data) => {
     if (data?.length > 0) {
