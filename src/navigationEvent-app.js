@@ -74,7 +74,7 @@ function leaderboardInitialize() {
 
 function wheelInitialize() {
   let counter = 0;
-  let timeoutTime = 500;
+  let timeoutTime = 700;
   let maxTryes = 10;
   const drawWheel = (data) => {
     try {
@@ -90,7 +90,11 @@ function wheelInitialize() {
   };
   fetchWheelData().then((data) => {
     if (data?.length > 0) {
-      drawWheel(data);
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        drawWheel(data);
+      } else {
+        document.addEventListener("load", (event) => drawWheel(data), { once: true });
+      }
     }
   });
 }
