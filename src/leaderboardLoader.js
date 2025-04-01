@@ -209,10 +209,11 @@ constructor(leaderboardsInfo, parrentElement) {
         
         const currentScrollLeft = this.leaderboardButtonsBox.scrollLeft + 30;
         
-        this.leaderboardButtonsBox.scrollTo({
-            left: currentScrollLeft + buttonWidth,
-            behavior: 'smooth'
-        });
+        // this.leaderboardButtonsBox.scrollTo({
+        //     left: currentScrollLeft + buttonWidth,
+        // });
+
+        this.smoothScrollTo(this.leaderboardButtonsBox, currentScrollLeft + buttonWidth,);
     }
     
     scrollButtonsLeft() {
@@ -226,10 +227,33 @@ constructor(leaderboardsInfo, parrentElement) {
         
         const currentScrollLeft = this.leaderboardButtonsBox.scrollLeft - 30;
         
-        this.leaderboardButtonsBox.scrollTo({
-            left: Math.max(0, currentScrollLeft - buttonWidth),
-            behavior: 'smooth'
-        });
+        // this.leaderboardButtonsBox.scrollTo({
+        //     left: Math.max(0, currentScrollLeft - buttonWidth),
+        // });
+
+        
+        this.smoothScrollTo(this.leaderboardButtonsBox,  Math.max(0, currentScrollLeft - buttonWidth));
+    }
+
+    smoothScrollTo(element, target, duration = 500) {
+        const start = element.scrollLeft;
+        const distance = target - start;
+        let startTime = null;
+    
+        function animation(currentTime) {
+            if (startTime === null) startTime = currentTime;
+            const timeElapsed = currentTime - startTime;
+            const progress = Math.min(timeElapsed / duration, 1);
+            const ease = progress * (2 - progress); // Простая функция easing
+    
+            element.scrollLeft = start + distance * ease;
+    
+            if (timeElapsed < duration) {
+                requestAnimationFrame(animation);
+            }
+        }
+    
+        requestAnimationFrame(animation);
     }
     
 
@@ -942,14 +966,15 @@ constructor(leaderboardsInfo, parrentElement) {
     
         parentBox.style.overflowX = 'auto';
         
-        // const buttonRect = button.getBoundingClientRect();
-        // const parentRect = parentBox.getBoundingClientRect();
-        // const newScrollLeft = button.offsetLeft - (parentRect.width - buttonRect.width) / 2;
+        const buttonRect = button.getBoundingClientRect();
+        const parentRect = parentBox.getBoundingClientRect();
+        const newScrollLeft = button.offsetLeft - (parentRect.width - buttonRect.width) / 2;
     
         // parentBox.scrollTo({
         //     left: newScrollLeft,
-        //     behavior: 'smooth'
         // });
+
+        this.smoothScrollTo(parentBox, newScrollLeft);
     }
 
     getTablePrizeClassnames(data) {
@@ -1103,10 +1128,13 @@ constructor(leaderboardsInfo, parrentElement) {
             
             const scrollPosition = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
             
-            this.leaderboardButtonsBox.scrollTo({
-                left: scrollPosition,
-                behavior: 'smooth'
-            });
+            // this.leaderboardButtonsBox.scrollTo({
+            //     left: scrollPosition,
+            // });
+
+            
+            this.smoothScrollTo(this.leaderboardButtonsBox, scrollPosition);
+
         } else if (!activeButton) {
             const inactive = document.createElement('div');
             inactive.id = "inactiveComponentlBABBAOO";
