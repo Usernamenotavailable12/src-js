@@ -78,12 +78,12 @@ function wheelInitialize() {
   let maxTryes = 10;
   const drawWheel = (data) => { 
     const wheelElement = document.getElementById("wheel");
-    if (!wheelElement) {
+    const listTopElement = document.getElementById("fortuneListTop");
+    const listElement = document.getElementById("fortuneList");
+    if (!wheelElement || !listTopElement || !listElement) {
       if (counter < maxTryes) {
         counter++;
-        setTimeout(() => {
-          drawWheel(data);
-        }, timeoutTime);
+        setTimeout(() => drawWheel(data), timeoutTime);
       }
       return;
     }
@@ -91,7 +91,7 @@ function wheelInitialize() {
   };
   fetchWheelData().then((data) => {
     if (data?.length > 0) {
-        drawWheel(data);
+      drawWheel(data);
     }
   });
 }
