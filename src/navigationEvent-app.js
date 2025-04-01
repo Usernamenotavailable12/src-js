@@ -83,7 +83,7 @@ function wheelInitialize() {
       if (counter < maxTryes) {
         counter++;
         setTimeout(() => {
-          drawWheel();
+          drawWheel(data);
         }, timeoutTime);
       }
     }
