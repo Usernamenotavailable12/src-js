@@ -21,6 +21,27 @@ async function tryMadeProgressBar() {
   }
 }
 
+async function tryLoadFreebetDeposit() {
+  const maxTries = 10;
+  let tries = 0;
+  const timeInterval = 500;
+
+  while (tries < maxTries) {
+    try {
+      // Check if the progress bar element exists
+      if (!document.getElementById("start-aaaaa-tour-bba")) {
+        throw new Error("Progress bar not found");
+      }
+      loadFreebetDeposit();; // Call your function when the element is found
+      break; // Exit the loop on success
+    } catch (e) {
+      tries++;
+      // Wait for the specified time interval before trying again
+      await new Promise(resolve => setTimeout(resolve, timeInterval));
+    }
+  }
+}
+
 
 function leaderboardInitialize() {
   const maxAttempts = 10;  
@@ -116,6 +137,9 @@ async function logCurrentPath(path, previousPath) {
   } if (path.includes("box")) {
     tryMadeProgressBar();
   }
+  if (path.includes("freebet-deposit-offer")) {
+    tryLoadFreebetDeposit();
+}
 }
 
 addEventListener("load", (event) => {
