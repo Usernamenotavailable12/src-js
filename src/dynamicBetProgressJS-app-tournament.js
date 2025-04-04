@@ -206,6 +206,8 @@ function getDateBasedValue() {
     "2025-04-03": "AiXeNpWzqf6gqVQ44l9u",
     "2025-04-04": "1jd9dnptsxMuhwaP342i",
     "2025-04-05": "Kf5iIzXS2WiLpm5sy6lH",
+    "2025-04-06": "8ZlI1kaD226SRPBdNaRB",
+    "2025-04-07": "HEC638CmQXLEXlhp6Wto",
   };
 
   const tbilisiDate = new Intl.DateTimeFormat("en-CA", {
