@@ -19,7 +19,7 @@ const loadFreebetDeposit = () => {
       ["MLYSBUD0inqrr4jmbb4T", { text: "100%"}],
   ]);
 
-  const aallprogressid = "fw7IIVUbPi3bmWqQQxCL";
+  const aallprogressid = "njF17udGh0oTc04xyHeP";
 
   fetchGraphQL(
       `query UserSegments($userId: ID!) {
