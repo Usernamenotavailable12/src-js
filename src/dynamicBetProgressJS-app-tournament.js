@@ -1,4 +1,22 @@
 let amountProgressMR = 0;
+let cachedProgressData = null;
+
+function getProgressData() {
+  if (!cachedProgressData) {
+      const dataElement = document.getElementById('progressBarData');
+      if (!dataElement) {
+          console.error("progressBarData element not found");
+          return null;
+      }
+      try {
+          cachedProgressData = JSON.parse(dataElement.textContent);
+      } catch (e) {
+          console.error("Error parsing progressBarData:", e);
+          return null;
+      }
+  }
+  return cachedProgressData;
+}
 
 async function buildAllProgressBars(progressData) {
     const progressBar = document.getElementById(progressData.progressBarParrent);
@@ -199,27 +217,22 @@ function buildProgressBar(progressElem, parent, data) {
 }
 
 function getDateBasedValue() {
-  const dateValues = {
-    "2025-03-31": "empty",
-    "2025-04-01": "1XRxLBflgNq1xMOfdkfd",
-    "2025-04-02": "ZbSmL667s99NwGCIB5lo",
-    "2025-04-03": "AiXeNpWzqf6gqVQ44l9u",
-    "2025-04-04": "1jd9dnptsxMuhwaP342i",
-    "2025-04-05": "Kf5iIzXS2WiLpm5sy6lH",
-    "2025-04-06": "8ZlI1kaD226SRPBdNaRB",
-    "2025-04-07": "HEC638CmQXLEXlhp6Wto",
-  };
+  const progressData = getProgressData();
+  if (!progressData || !progressData.dateValues) {
+      return "0";
+  }
+
+  const dateValues = progressData.dateValues;
 
   const tbilisiDate = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tbilisi",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
+      timeZone: "Asia/Tbilisi",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
   }).format(new Date());
 
   return dateValues[tbilisiDate] || "0";
 }
-
 
 
 async function showProgressBarMrch() {
@@ -251,15 +264,10 @@ async function showProgressBarMrch() {
 }
 
 
+
 function madeProgressBar() {
-    const dataElement = document.getElementById('progressBarData');
-    if (dataElement) {
-        try {
-            const data = JSON.parse(dataElement.textContent);
-            buildAllProgressBars(data);
-        } catch (e) {
-            console.error(e);
-        }
-    } else {
-    }
+  const progressData = getProgressData();
+  if (progressData) {
+      buildAllProgressBars(progressData);
+  }
 }
