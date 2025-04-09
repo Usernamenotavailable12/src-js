@@ -136,6 +136,8 @@ async function logCurrentPath(path, previousPath) {
     wheelInitialize();
   } if (path.includes("box")) {
     tryMadeProgressBar();
+  } if (path.includes("betprogressbar")) {
+    tryMadeProgressBar();
   }
   if (path.includes("freebet-deposit-offer")) {
     tryLoadFreebetDeposit();
