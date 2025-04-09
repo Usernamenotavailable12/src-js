@@ -78,7 +78,7 @@ async function buildAllProgressBars(progressData) {
       progressBarsParrent.innerHTML = progressData.complateComponent[lang];
     } else{
       progressBarsParrent.innerHTML = `
-    <div style="${currPercent > 0 ? `--progress-value: ${currPercent}` : ''}" class="progress-bar-container ${0 < currPercent < 100  ? 'bet_made' : ''} ${currPercent == 100 ? 'bet_done' : ''}">
+    <div ${currPercent > 0 ? `style="--progress-value: ${currPercent}"` : ''} class="progress-bar-container ${currPercent > 0 ? 'bet_made' : ''}">
           <div class="progress-bar-up-text-container progres-text-container">
               <div class="pgogress-bar-up-title-content progres-text">${progressData.upTitleContent[lang]}</div>
               <div class="progress-bar-free-start"> </div>
